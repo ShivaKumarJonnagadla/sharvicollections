@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bar,
   BarChart,
@@ -13,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { CircleDollarSign, Package, ShoppingCart, Users } from 'lucide-react';
+import { CircleDollarSign, Package, ShoppingCart, Trash2, Users } from 'lucide-react';
 import { formatSEK, type ProductDTO } from '@sharvi/shared';
 import { api } from '@/lib/api';
 import { PageLoader } from '@/components/PageLoader';
@@ -38,9 +38,18 @@ interface DashboardData {
 const PIE_COLORS = ['#7c1f3f', '#a82c56', '#c94873', '#dcb857', '#c9a13a', '#856726'];
 
 export function DashboardPage() {
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'dashboard'],
     queryFn: () => api.get<DashboardData>('/analytics/dashboard'),
+  });
+
+  const deleteOrder = useMutation({
+    mutationFn: (id: string) => api.delete(`/orders/admin/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'orders'] });
+    },
   });
 
   if (isLoading || !data) return <PageLoader />;
@@ -163,6 +172,7 @@ export function DashboardPage() {
                   <th className="pb-3">Payment</th>
                   <th className="pb-3">Status</th>
                   <th className="pb-3 text-right">Total</th>
+                  <th className="pb-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-maroon-50">
@@ -177,6 +187,19 @@ export function DashboardPage() {
                       </span>
                     </td>
                     <td className="py-3 text-right font-medium">{formatSEK(o.totalMinor, 'sv')}</td>
+                    <td className="py-3 text-right">
+                      <button
+                        aria-label={`Delete order ${o.orderNumber}`}
+                        disabled={deleteOrder.isPending}
+                        onClick={() => {
+                          if (confirm(`Delete order ${o.orderNumber}? This cannot be undone.`))
+                            deleteOrder.mutate(o.id);
+                        }}
+                        className="grid h-8 w-8 place-items-center rounded-lg text-red-500 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

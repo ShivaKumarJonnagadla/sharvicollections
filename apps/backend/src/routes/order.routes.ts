@@ -174,4 +174,30 @@ router.patch(
   }),
 );
 
+/**
+ * @openapi
+ * /orders/admin/{id}:
+ *   delete:
+ *     tags: [Orders]
+ *     summary: (Admin) Permanently delete an order (cascades order items)
+ */
+router.delete(
+  '/admin/:id',
+  requireAuth,
+  requireRole('ADMIN'),
+  asyncHandler(async (req: AuthedRequest, res) => {
+    const order = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!order) throw AppError.notFound('Order not found');
+    await prisma.order.delete({ where: { id: order.id } }); // OrderItems cascade
+    await audit(req, {
+      action: 'order.delete',
+      userId: req.user!.sub,
+      entity: 'Order',
+      entityId: order.id,
+      metadata: { orderNumber: order.orderNumber },
+    });
+    return ok(res, { deleted: true });
+  }),
+);
+
 export default router;

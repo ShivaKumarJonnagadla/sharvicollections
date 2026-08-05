@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
 import { ORDER_STATUSES, PAYMENT_STATUSES, formatSEK, type OrderDTO, type Paginated } from '@sharvi/shared';
 import { api } from '@/lib/api';
 import { PageLoader } from '@/components/PageLoader';
@@ -14,6 +15,14 @@ export function AdminOrders() {
     mutationFn: ({ id, patch }: { id: string; patch: Record<string, string> }) =>
       api.patch(`/orders/admin/${id}/status`, patch),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'orders'] }),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => api.delete(`/orders/admin/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'orders'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+    },
   });
 
   if (isLoading || !data) return <PageLoader />;
@@ -36,6 +45,7 @@ export function AdminOrders() {
                 <th className="p-4">Status</th>
                 <th className="p-4">Pay status</th>
                 <th className="p-4 text-right">Total</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-maroon-50">
@@ -87,6 +97,19 @@ export function AdminOrders() {
                     </select>
                   </td>
                   <td className="p-4 text-right font-medium">{formatSEK(o.totalMinor, 'sv')}</td>
+                  <td className="p-4 text-right">
+                    <button
+                      aria-label={`Delete order ${o.orderNumber}`}
+                      disabled={remove.isPending}
+                      onClick={() => {
+                        if (confirm(`Delete order ${o.orderNumber}? This cannot be undone.`))
+                          remove.mutate(o.id);
+                      }}
+                      className="grid h-9 w-9 place-items-center rounded-lg text-red-500 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
