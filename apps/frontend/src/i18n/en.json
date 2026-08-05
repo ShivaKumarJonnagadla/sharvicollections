@@ -44,6 +44,7 @@
     "quickAdd": "Quick add",
     "outOfStock": "Out of stock",
     "inStock": "In stock",
+    "onlyLeft": "Only {{count}} left",
     "description": "Description",
     "related": "You may also like",
     "share": "Share",

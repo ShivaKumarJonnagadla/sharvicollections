@@ -71,6 +71,14 @@ router.post(
       const lineItems = input.items.map((item) => {
         const product = byId.get(item.productId);
         if (!product) throw AppError.badRequest(`Product unavailable: ${item.productId}`);
+        // Prevent overselling — block if not enough stock.
+        if (product.stock < item.quantity) {
+          throw AppError.conflict(
+            product.stock <= 0
+              ? `"${product.name}" is out of stock`
+              : `Only ${product.stock} left of "${product.name}"`,
+          );
+        }
         const unit = product.priceMinor;
         return {
           productId: product.id,
@@ -86,7 +94,7 @@ router.post(
       const shippingCost = input.shippingRequired ? shippingCostMinor : 0;
       const orderNumber = await nextOrderNumber(tx);
 
-      return tx.order.create({
+      const createdOrder = await tx.order.create({
         data: {
           orderNumber,
           customerName: input.customerName,
@@ -110,6 +118,16 @@ router.post(
         },
         include: { items: true },
       });
+
+      // Decrement stock for each ordered product (within the same transaction).
+      for (const item of input.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+        });
+      }
+
+      return createdOrder;
     });
 
     await audit(req, {

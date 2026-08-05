@@ -34,6 +34,9 @@ export const CONSENT_POLICY_VERSION = '2026-01';
 /** Flat shipping fee (in minor units / öre) applied when shipping is required. */
 export const SHIPPING_COST_MINOR = 4900; // 49 kr
 
+/** At or below this stock level, show a "low stock" indicator. */
+export const LOW_STOCK_THRESHOLD = 5;
+
 /** Merchant / business details (non-secret, safe to ship to the client). */
 export const BUSINESS = {
   name: 'Sharvi Collections',

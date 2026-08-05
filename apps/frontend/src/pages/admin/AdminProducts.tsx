@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
-import { formatSEK, type Paginated, type ProductDTO } from '@sharvi/shared';
+import { formatSEK, LOW_STOCK_THRESHOLD, type Paginated, type ProductDTO } from '@sharvi/shared';
 import { api } from '@/lib/api';
 import { cloudinaryUrl } from '@/lib/utils';
 import { PageLoader } from '@/components/PageLoader';
@@ -42,6 +42,7 @@ export function AdminProducts() {
               <th className="p-4">Product</th>
               <th className="p-4">Category</th>
               <th className="p-4">Price</th>
+              <th className="p-4">Stock</th>
               <th className="p-4">Status</th>
               <th className="p-4 text-right">Actions</th>
             </tr>
@@ -70,6 +71,19 @@ export function AdminProducts() {
                 </td>
                 <td className="p-4 text-ink/70">{p.category.name}</td>
                 <td className="p-4">{formatSEK(p.priceMinor, 'sv')}</td>
+                <td className="p-4">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      p.stock <= 0
+                        ? 'bg-red-50 text-red-600'
+                        : p.stock <= LOW_STOCK_THRESHOLD
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-emerald-50 text-emerald-700'
+                    }`}
+                  >
+                    {p.stock <= 0 ? 'Out' : `${p.stock} left`}
+                  </span>
+                </td>
                 <td className="p-4">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs ${

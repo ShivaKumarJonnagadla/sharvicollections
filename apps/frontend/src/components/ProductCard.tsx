@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Heart, ShoppingBag } from 'lucide-react';
-import { formatSEK, productName, type ProductDTO } from '@sharvi/shared';
+import { formatSEK, LOW_STOCK_THRESHOLD, productName, type ProductDTO } from '@sharvi/shared';
 import { cloudinaryUrl, cn } from '@/lib/utils';
 import { useCart } from '@/stores/cart';
 import { useUi } from '@/stores/ui';
@@ -24,6 +24,8 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
   const images = product.images.length ? product.images : [];
   const locale = i18n.language.startsWith('sv') ? 'sv' : 'en';
   const displayName = productName(product, locale);
+  const soldOut = product.stock <= 0;
+  const lowStock = !soldOut && product.stock <= LOW_STOCK_THRESHOLD;
 
   const go = (dir: 1 | -1) => (e: React.MouseEvent) => {
     e.preventDefault();
@@ -33,6 +35,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
 
   const quickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (soldOut) return;
     add(product);
     openCart();
   };
@@ -61,16 +64,32 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
             <div className="flex h-full items-center justify-center text-maroon-300">No image</div>
           )}
 
-          {/* Badge */}
-          {product.badge !== 'NONE' && (
-            <span
-              className={cn(
-                'absolute left-3 top-3 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide shadow-sm',
-                badgeStyles[product.badge],
-              )}
-            >
-              {t(`product.badge${product.badge[0]}${product.badge.slice(1).toLowerCase()}`)}
-            </span>
+          {/* Badges (stacked): product badge + stock indicator */}
+          <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+            {product.badge !== 'NONE' && (
+              <span
+                className={cn(
+                  'rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide shadow-sm',
+                  badgeStyles[product.badge],
+                )}
+              >
+                {t(`product.badge${product.badge[0]}${product.badge.slice(1).toLowerCase()}`)}
+              </span>
+            )}
+            {lowStock && (
+              <span className="rounded-full bg-amber-500 px-3 py-1 text-[11px] font-semibold text-white shadow-sm">
+                {t('product.onlyLeft', { count: product.stock })}
+              </span>
+            )}
+          </div>
+
+          {/* Sold-out overlay */}
+          {soldOut && (
+            <div className="absolute inset-0 flex items-center justify-center bg-ink/40">
+              <span className="rounded-full bg-white/90 px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-maroon-700">
+                {t('product.outOfStock')}
+              </span>
+            </div>
           )}
 
           {/* Wishlist (future-ready) */}
@@ -124,14 +143,16 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
             </div>
           )}
 
-          {/* Quick add */}
-          <button
-            type="button"
-            onClick={quickAdd}
-            className="btn-primary absolute inset-x-3 bottom-3 translate-y-4 py-2 text-xs opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100"
-          >
-            <ShoppingBag className="h-4 w-4" /> {t('product.quickAdd')}
-          </button>
+          {/* Quick add (hidden when sold out) */}
+          {!soldOut && (
+            <button
+              type="button"
+              onClick={quickAdd}
+              className="btn-primary absolute inset-x-3 bottom-3 translate-y-4 py-2 text-xs opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100"
+            >
+              <ShoppingBag className="h-4 w-4" /> {t('product.quickAdd')}
+            </button>
+          )}
         </div>
 
         <div className="mt-3 space-y-1">

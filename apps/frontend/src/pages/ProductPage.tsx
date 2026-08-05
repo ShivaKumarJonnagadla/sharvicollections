@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, Share2, ShoppingBag } from 'lucide-react';
-import { formatSEK, productDescription, productName } from '@sharvi/shared';
+import { formatSEK, LOW_STOCK_THRESHOLD, productDescription, productName } from '@sharvi/shared';
 import { useProduct } from '@/hooks/catalog';
 import { ProductGallery } from '@/components/ProductGallery';
 import { ProductCard } from '@/components/ProductCard';
@@ -123,11 +123,19 @@ export function ProductPage() {
 
             <p
               className={`mt-3 inline-flex items-center gap-1.5 text-sm ${
-                product.stock > 0 ? 'text-emerald-600' : 'text-maroon-400'
+                product.stock <= 0
+                  ? 'text-maroon-400'
+                  : product.stock <= LOW_STOCK_THRESHOLD
+                    ? 'text-amber-600'
+                    : 'text-emerald-600'
               }`}
             >
               <span className="h-2 w-2 rounded-full bg-current" />
-              {product.stock > 0 ? t('product.inStock') : t('product.outOfStock')}
+              {product.stock <= 0
+                ? t('product.outOfStock')
+                : product.stock <= LOW_STOCK_THRESHOLD
+                  ? t('product.onlyLeft', { count: product.stock })
+                  : t('product.inStock')}
             </p>
 
             {displayDescription && (
