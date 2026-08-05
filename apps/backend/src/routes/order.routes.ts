@@ -15,16 +15,32 @@ const router = Router();
 
 /**
  * Generate the next order number like SC-2026-0001 using a monotonic per-year
- * counter, so deleting an order never causes a number collision.
+ * counter. The next value is max(counter + 1, highest existing order + 1), so it
+ * never collides — neither with a still-present older order, nor after deletes.
  */
 async function nextOrderNumber(tx: Prisma.TransactionClient): Promise<string> {
   const year = new Date().getFullYear();
-  const counter = await tx.counter.upsert({
-    where: { key: `order-${year}` },
-    create: { key: `order-${year}`, value: 1 },
-    update: { value: { increment: 1 } },
+  const key = `order-${year}`;
+
+  const [counter, latest] = await Promise.all([
+    tx.counter.findUnique({ where: { key } }),
+    tx.order.findFirst({
+      where: { orderNumber: { startsWith: `SC-${year}-` } },
+      orderBy: { orderNumber: 'desc' },
+      select: { orderNumber: true },
+    }),
+  ]);
+
+  const maxExisting = latest ? Number(latest.orderNumber.split('-').pop()) || 0 : 0;
+  const nextVal = Math.max((counter?.value ?? 0) + 1, maxExisting + 1);
+
+  await tx.counter.upsert({
+    where: { key },
+    create: { key, value: nextVal },
+    update: { value: nextVal },
   });
-  return `SC-${year}-${String(counter.value).padStart(4, '0')}`;
+
+  return `SC-${year}-${String(nextVal).padStart(4, '0')}`;
 }
 
 /**
