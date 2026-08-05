@@ -8,7 +8,7 @@ import { useCategories, useProducts } from '@/hooks/catalog';
 import { ProductCard } from '@/components/ProductCard';
 import { ProductGridSkeleton } from '@/components/Skeletons';
 import { Seo } from '@/components/Seo';
-import { cn } from '@/lib/utils';
+import { Select } from '@/components/ui/Select';
 
 export function ShopPage() {
   const { t } = useTranslation();
@@ -115,53 +115,32 @@ export function ShopPage() {
               <label className="mb-2 block text-sm font-medium text-ink/70">
                 {t('shop.category')}
               </label>
-              <select
+              <Select
                 value={category}
-                onChange={(e) => selectCategory(e.target.value)}
-                className="w-full rounded-xl border border-maroon-200 bg-white px-3 py-2.5 text-sm"
-              >
-                <option value="">{t('shop.allCategories')}</option>
-                {categories?.map((c) => (
-                  <option key={c.id} value={c.slug}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={selectCategory}
+                placeholder={t('shop.allCategories')}
+                options={[
+                  { value: '', label: t('shop.allCategories') },
+                  ...(categories?.map((c) => ({ value: c.slug, label: c.name })) ?? []),
+                ]}
+              />
             </div>
 
-            {/* Subcategory chips (materialised here instead of a hover menu) */}
+            {/* Subcategory dropdown */}
             {activeCategory && activeCategory.subcategories.length > 0 && (
               <div>
                 <label className="mb-2 block text-sm font-medium text-ink/70">
                   {t('shop.subcategory')}
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => update({ subcategory: undefined })}
-                    className={cn(
-                      'rounded-full border px-3 py-1.5 text-xs transition-colors',
-                      !subcategory
-                        ? 'border-maroon-600 bg-maroon-600 text-white'
-                        : 'border-maroon-200 bg-white text-ink/70 hover:border-maroon-300',
-                    )}
-                  >
-                    {t('nav.viewAll')}
-                  </button>
-                  {activeCategory.subcategories.map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => update({ subcategory: s.slug })}
-                      className={cn(
-                        'rounded-full border px-3 py-1.5 text-xs transition-colors',
-                        subcategory === s.slug
-                          ? 'border-maroon-600 bg-maroon-600 text-white'
-                          : 'border-maroon-200 bg-white text-ink/70 hover:border-maroon-300',
-                      )}
-                    >
-                      {s.name}
-                    </button>
-                  ))}
-                </div>
+                <Select
+                  value={subcategory}
+                  onChange={(v) => update({ subcategory: v || undefined })}
+                  placeholder={t('nav.viewAll')}
+                  options={[
+                    { value: '', label: t('nav.viewAll') },
+                    ...activeCategory.subcategories.map((s) => ({ value: s.slug, label: s.name })),
+                  ]}
+                />
               </div>
             )}
 
@@ -201,18 +180,19 @@ export function ShopPage() {
 
           {/* Results */}
           <div>
-            <div className="mb-6 flex items-center justify-end">
-              <label className="mr-2 text-sm text-ink/60">{t('shop.sort')}:</label>
-              <select
+            <div className="mb-6 flex items-center justify-end gap-2">
+              <label className="text-sm text-ink/60">{t('shop.sort')}:</label>
+              <Select
+                className="w-52"
                 value={sort}
-                onChange={(e) => update({ sort: e.target.value })}
-                className="rounded-xl border border-maroon-200 bg-white px-3 py-2 text-sm"
-              >
-                <option value="newest">{t('shop.sortNewest')}</option>
-                <option value="price_asc">{t('shop.sortPriceLow')}</option>
-                <option value="price_desc">{t('shop.sortPriceHigh')}</option>
-                <option value="alphabetical">{t('shop.sortAlpha')}</option>
-              </select>
+                onChange={(v) => update({ sort: v })}
+                options={[
+                  { value: 'newest', label: t('shop.sortNewest') },
+                  { value: 'price_asc', label: t('shop.sortPriceLow') },
+                  { value: 'price_desc', label: t('shop.sortPriceHigh') },
+                  { value: 'alphabetical', label: t('shop.sortAlpha') },
+                ]}
+              />
             </div>
 
             {isLoading ? (
