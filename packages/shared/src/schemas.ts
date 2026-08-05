@@ -61,7 +61,7 @@ export const checkoutItemSchema = z.object({
   quantity: z.number().int().min(1).max(99),
 });
 
-export const checkoutSchema = z.object({
+const checkoutObject = z.object({
   customerName: z.string().min(2, 'Name is required').max(120),
   customerEmail: z.string().email('Enter a valid email'),
   customerPhone: z
@@ -72,8 +72,41 @@ export const checkoutSchema = z.object({
   note: z.string().max(1000).optional(),
   paymentMethod: z.enum(PAYMENT_METHODS),
   items: z.array(checkoutItemSchema).min(1, 'Your cart is empty'),
+  // Shipping (address required only when shippingRequired is true).
+  shippingRequired: z.boolean().default(false),
+  shippingAddress: z.string().max(200).optional(),
+  shippingCity: z.string().max(100).optional(),
+  shippingCounty: z.string().max(100).optional(),
+  shippingPostalCode: z.string().max(20).optional(),
+  shippingCountry: z.string().max(100).optional(),
 });
+
+/** Shared refinement: require the address fields when shipping is on. */
+function shippingRefine(
+  val: { shippingRequired?: boolean } & Record<string, unknown>,
+  ctx: z.RefinementCtx,
+) {
+  if (!val.shippingRequired) return;
+  const required: [string, string][] = [
+    ['shippingAddress', 'Address is required'],
+    ['shippingCity', 'City is required'],
+    ['shippingPostalCode', 'Postal code is required'],
+    ['shippingCountry', 'Country is required'],
+  ];
+  for (const [field, message] of required) {
+    if (!String(val[field] ?? '').trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message });
+    }
+  }
+}
+
+/** Full checkout payload (backend). */
+export const checkoutSchema = checkoutObject.superRefine(shippingRefine);
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
+
+/** Checkout form (frontend) — items come from the cart, so they're omitted here. */
+export const checkoutFormSchema = checkoutObject.omit({ items: true }).superRefine(shippingRefine);
+export type CheckoutFormInput = z.infer<typeof checkoutFormSchema>;
 
 export const consentSchema = z.object({
   visitorId: z.string().min(8).max(64),

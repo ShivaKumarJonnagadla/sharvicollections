@@ -98,6 +98,13 @@ export interface OrderDTO {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   paymentRef: string | null;
+  shippingRequired: boolean;
+  shippingAddress: string | null;
+  shippingCity: string | null;
+  shippingCounty: string | null;
+  shippingPostalCode: string | null;
+  shippingCountry: string | null;
+  shippingCostMinor: number;
   subtotalMinor: number;
   totalMinor: number;
   currency: string;

@@ -10,6 +10,7 @@ import {
   Package,
   Settings,
   ShoppingCart,
+  Tags,
   Users,
   X,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ export function AdminLayout() {
   const links = [
     { to: '/admin', label: t('admin.dashboard'), icon: LayoutDashboard, end: true },
     { to: '/admin/products', label: t('admin.products'), icon: Package },
+    { to: '/admin/categories', label: t('admin.categories'), icon: Tags },
     { to: '/admin/orders', label: t('admin.orders'), icon: ShoppingCart },
     { to: '/admin/analytics', label: t('admin.analytics'), icon: BarChart3 },
     { to: '/admin/customers', label: t('admin.customers'), icon: Users },

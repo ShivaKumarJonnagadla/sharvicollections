@@ -127,4 +127,36 @@ router.get(
   }),
 );
 
+/**
+ * @openapi
+ * /analytics/customers:
+ *   get:
+ *     tags: [Analytics]
+ *     summary: (Admin) Customers derived from orders
+ */
+router.get(
+  '/customers',
+  requireAuth,
+  requireRole('ADMIN'),
+  asyncHandler(async (_req, res) => {
+    const groups = await prisma.order.groupBy({
+      by: ['customerEmail', 'customerName'],
+      _count: { _all: true },
+      _sum: { totalMinor: true },
+      _max: { createdAt: true },
+      orderBy: { _max: { createdAt: 'desc' } },
+    });
+    return ok(
+      res,
+      groups.map((g) => ({
+        name: g.customerName,
+        email: g.customerEmail,
+        orders: g._count._all,
+        spentMinor: g._sum.totalMinor ?? 0,
+        lastOrderAt: g._max.createdAt?.toISOString() ?? null,
+      })),
+    );
+  }),
+);
+
 export default router;

@@ -2,12 +2,17 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
-import { Banknote, Smartphone } from 'lucide-react';
-import { z } from 'zod';
-import { checkoutSchema, formatSEK, type OrderDTO } from '@sharvi/shared';
+import { Banknote, Smartphone, Truck } from 'lucide-react';
+import {
+  checkoutFormSchema,
+  formatSEK,
+  type CheckoutFormInput,
+  type OrderDTO,
+} from '@sharvi/shared';
 import { useCart } from '@/stores/cart';
 import { api, ApiError } from '@/lib/api';
 import { cloudinaryUrl } from '@/lib/utils';
@@ -23,24 +28,29 @@ export function CheckoutPage() {
   const [swishOrder, setSwishOrder] = useState<OrderDTO | null>(null);
   const [qr, setQr] = useState<string | null>(null);
 
-  // The form only collects contact + payment; cart items are added on submit,
-  // so validate against the schema WITHOUT the `items` field (otherwise RHF
-  // blocks submit because the form has no items input).
-  const formSchema = checkoutSchema.omit({ items: true });
-  type FormValues = z.infer<typeof formSchema>;
+  // Store settings drive the shipping fee (admin-configurable).
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => api.get<{ shippingCostKr: number; announcement: string }>('/settings'),
+    staleTime: 5 * 60_000,
+  });
+  const shippingCostKr = settings?.shippingCostKr ?? 49;
 
+  type FormValues = CheckoutFormInput;
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { paymentMethod: 'SWISH' },
+    resolver: zodResolver(checkoutFormSchema),
+    defaultValues: { paymentMethod: 'SWISH', shippingRequired: false, shippingCountry: 'Sweden' },
   });
 
   const paymentMethod = watch('paymentMethod');
-  const subtotalKr = subtotalMinor() / 100;
+  const shippingRequired = watch('shippingRequired');
+  const shippingMinor = shippingRequired ? shippingCostKr * 100 : 0;
+  const totalMinor = subtotalMinor() + shippingMinor;
 
   // Generate the Swish QR once we have a placed Swish order.
   useEffect(() => {
@@ -173,6 +183,77 @@ export function CheckoutPage() {
             </div>
           </section>
 
+          {/* Shipping */}
+          <section className="card space-y-4 p-6">
+            <label className="flex cursor-pointer items-center justify-between gap-3">
+              <span className="flex items-center gap-2">
+                <Truck className="h-5 w-5 text-maroon-600" />
+                <span>
+                  <span className="block font-serif text-lg text-maroon-700">
+                    {t('checkout.shipping')}
+                  </span>
+                  <span className="block text-xs text-ink/60">
+                    {t('checkout.shippingHint', { amount: formatSEK(shippingCostKr * 100, locale) })}
+                  </span>
+                </span>
+              </span>
+              {/* Toggle switch */}
+              <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
+                <input
+                  {...register('shippingRequired')}
+                  type="checkbox"
+                  className="peer h-6 w-11 cursor-pointer appearance-none rounded-full bg-maroon-200 transition-colors checked:bg-maroon-600"
+                />
+                <span className="pointer-events-none absolute left-1 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
+              </span>
+            </label>
+
+            {shippingRequired && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="mb-1 block text-sm text-ink/70">{t('checkout.address')}</label>
+                  <input {...register('shippingAddress')} className={inputCls} autoComplete="street-address" />
+                  {errors.shippingAddress && (
+                    <p className="mt-1 text-xs text-red-600">{errors.shippingAddress.message}</p>
+                  )}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-sm text-ink/70">{t('checkout.postalCode')}</label>
+                    <input {...register('shippingPostalCode')} className={inputCls} autoComplete="postal-code" />
+                    {errors.shippingPostalCode && (
+                      <p className="mt-1 text-xs text-red-600">{errors.shippingPostalCode.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm text-ink/70">{t('checkout.city')}</label>
+                    <input {...register('shippingCity')} className={inputCls} autoComplete="address-level2" />
+                    {errors.shippingCity && (
+                      <p className="mt-1 text-xs text-red-600">{errors.shippingCity.message}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-sm text-ink/70">{t('checkout.county')}</label>
+                    <input {...register('shippingCounty')} className={inputCls} autoComplete="address-level1" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm text-ink/70">{t('checkout.country')}</label>
+                    <input {...register('shippingCountry')} className={inputCls} autoComplete="country-name" />
+                    {errors.shippingCountry && (
+                      <p className="mt-1 text-xs text-red-600">{errors.shippingCountry.message}</p>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </section>
+
           <section className="card space-y-3 p-6">
             <h2 className="font-serif text-lg text-maroon-700">{t('checkout.payment')}</h2>
 
@@ -229,11 +310,19 @@ export function CheckoutPage() {
               </li>
             ))}
           </ul>
-          <div className="flex items-center justify-between border-t border-maroon-100 pt-4 text-lg">
-            <span className="text-ink/70">{t('checkout.total')}</span>
-            <span className="font-semibold text-maroon-700">
-              {formatSEK(subtotalKr * 100, locale)}
-            </span>
+          <div className="space-y-2 border-t border-maroon-100 pt-4 text-sm">
+            <div className="flex items-center justify-between text-ink/70">
+              <span>{t('cart.subtotal')}</span>
+              <span>{formatSEK(subtotalMinor(), locale)}</span>
+            </div>
+            <div className="flex items-center justify-between text-ink/70">
+              <span>{t('checkout.shipping')}</span>
+              <span>{shippingRequired ? formatSEK(shippingMinor, locale) : '—'}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-maroon-100 pt-2 text-lg">
+              <span className="text-ink/70">{t('checkout.total')}</span>
+              <span className="font-semibold text-maroon-700">{formatSEK(totalMinor, locale)}</span>
+            </div>
           </div>
           <p className="text-xs text-ink/50">
             {paymentMethod === 'SWISH' ? t('checkout.swishHint') : t('checkout.cashHint')}

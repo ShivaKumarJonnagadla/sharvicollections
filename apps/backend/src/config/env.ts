@@ -40,6 +40,11 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
   CLOUDINARY_UPLOAD_FOLDER: z.string().default('sharvi-collections'),
+
+  // Email (Resend) + public site URL used in order emails / tracking links.
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default('Sharvi Collections <onboarding@resend.dev>'),
+  SITE_URL: z.string().default('https://sharvicollections.vercel.app'),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -62,6 +67,7 @@ export const env = {
   cloudinaryConfigured: Boolean(
     raw.CLOUDINARY_CLOUD_NAME && raw.CLOUDINARY_API_KEY && raw.CLOUDINARY_API_SECRET,
   ),
+  emailConfigured: Boolean(raw.RESEND_API_KEY),
 };
 
 export type Env = typeof env;

@@ -26,6 +26,37 @@ function ensureConfigured() {
 
 /**
  * @openapi
+ * /uploads/library:
+ *   get:
+ *     tags: [Uploads]
+ *     summary: (Admin) Media library — all product images
+ */
+router.get(
+  '/library',
+  requireAuth,
+  requireRole('ADMIN'),
+  asyncHandler(async (_req, res) => {
+    const { prisma } = await import('../lib/prisma.js');
+    const images = await prisma.productImage.findMany({
+      include: { product: { select: { name: true, slug: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 300,
+    });
+    return ok(
+      res,
+      images.map((i) => ({
+        id: i.id,
+        url: i.url,
+        alt: i.alt,
+        productName: i.product?.name ?? null,
+        productSlug: i.product?.slug ?? null,
+      })),
+    );
+  }),
+);
+
+/**
+ * @openapi
  * /uploads/sign:
  *   get:
  *     tags: [Uploads]

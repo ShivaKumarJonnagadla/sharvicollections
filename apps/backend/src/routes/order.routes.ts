@@ -1,24 +1,30 @@
 import { Router } from 'express';
+import type { Prisma } from '@prisma/client';
 import { checkoutSchema, type CheckoutInput } from '@sharvi/shared';
 import { prisma } from '../lib/prisma.js';
 import { AppError, asyncHandler, created, ok } from '../lib/http.js';
 import { serializeOrder } from '../lib/serialize.js';
 import { audit } from '../lib/audit.js';
+import { sendOrderConfirmation } from '../lib/email.js';
+import { getStoreSettings } from '../lib/settings.js';
 import { validate, validated } from '../middleware/validate.js';
 import { orderLimiter } from '../middleware/rateLimit.js';
 import { requireAuth, requireRole, type AuthedRequest } from '../middleware/auth.js';
 
 const router = Router();
 
-/** Generate the next order number like SC-2026-0001 within a transaction. */
-async function nextOrderNumber(tx: {
-  order: { count: (args: { where: unknown }) => Promise<number> };
-}): Promise<string> {
+/**
+ * Generate the next order number like SC-2026-0001 using a monotonic per-year
+ * counter, so deleting an order never causes a number collision.
+ */
+async function nextOrderNumber(tx: Prisma.TransactionClient): Promise<string> {
   const year = new Date().getFullYear();
-  const countThisYear = await tx.order.count({
-    where: { createdAt: { gte: new Date(`${year}-01-01T00:00:00Z`) } },
+  const counter = await tx.counter.upsert({
+    where: { key: `order-${year}` },
+    create: { key: `order-${year}`, value: 1 },
+    update: { value: { increment: 1 } },
   });
-  return `SC-${year}-${String(countThisYear + 1).padStart(4, '0')}`;
+  return `SC-${year}-${String(counter.value).padStart(4, '0')}`;
 }
 
 /**
@@ -34,6 +40,8 @@ router.post(
   validate(checkoutSchema),
   asyncHandler(async (req, res) => {
     const input = validated<CheckoutInput>(req);
+    const storeSettings = await getStoreSettings();
+    const shippingCostMinor = storeSettings.shippingCostKr * 100;
 
     const order = await prisma.$transaction(async (tx) => {
       // Re-fetch products server-side; never trust client prices.
@@ -59,7 +67,8 @@ router.post(
       });
 
       const subtotal = lineItems.reduce((sum, l) => sum + l.lineTotalMinor, 0);
-      const orderNumber = await nextOrderNumber(tx as never);
+      const shippingCost = input.shippingRequired ? shippingCostMinor : 0;
+      const orderNumber = await nextOrderNumber(tx);
 
       return tx.order.create({
         data: {
@@ -72,8 +81,15 @@ router.post(
           paymentStatus: input.paymentMethod === 'SWISH' ? 'PENDING' : 'UNPAID',
           // Swish reference doubles as the order number for reconciliation.
           paymentRef: input.paymentMethod === 'SWISH' ? orderNumber : null,
+          shippingRequired: input.shippingRequired,
+          shippingAddress: input.shippingRequired ? input.shippingAddress : null,
+          shippingCity: input.shippingRequired ? input.shippingCity : null,
+          shippingCounty: input.shippingRequired ? input.shippingCounty : null,
+          shippingPostalCode: input.shippingRequired ? input.shippingPostalCode : null,
+          shippingCountry: input.shippingRequired ? (input.shippingCountry ?? 'Sweden') : null,
+          shippingCostMinor: shippingCost,
           subtotalMinor: subtotal,
-          totalMinor: subtotal,
+          totalMinor: subtotal + shippingCost,
           items: { create: lineItems },
         },
         include: { items: true },
@@ -87,7 +103,11 @@ router.post(
       metadata: { orderNumber: order.orderNumber, total: order.totalMinor },
     });
 
-    return created(res, serializeOrder(order));
+    const dto = serializeOrder(order);
+    // Fire-and-forget confirmation email (never blocks the response).
+    void sendOrderConfirmation(dto);
+
+    return created(res, dto);
   }),
 );
 

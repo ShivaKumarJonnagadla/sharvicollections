@@ -41,8 +41,17 @@ const AdminProductEdit = lazy(() =>
 const AdminOrders = lazy(() =>
   import('@/pages/admin/AdminOrders').then((m) => ({ default: m.AdminOrders })),
 );
-const AdminSimple = lazy(() =>
-  import('@/pages/admin/AdminSimple').then((m) => ({ default: m.AdminSimple })),
+const AdminCategories = lazy(() =>
+  import('@/pages/admin/AdminCategories').then((m) => ({ default: m.AdminCategories })),
+);
+const AdminCustomers = lazy(() =>
+  import('@/pages/admin/AdminCustomers').then((m) => ({ default: m.AdminCustomers })),
+);
+const AdminMedia = lazy(() =>
+  import('@/pages/admin/AdminMedia').then((m) => ({ default: m.AdminMedia })),
+);
+const AdminSettings = lazy(() =>
+  import('@/pages/admin/AdminSettings').then((m) => ({ default: m.AdminSettings })),
 );
 
 export default function App() {
@@ -77,11 +86,12 @@ export default function App() {
               <Route path="products" element={<AdminProducts />} />
               <Route path="products/new" element={<AdminProductEdit />} />
               <Route path="products/:id" element={<AdminProductEdit />} />
+              <Route path="categories" element={<AdminCategories />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="analytics" element={<DashboardPage />} />
-              <Route path="customers" element={<AdminSimple />} />
-              <Route path="settings" element={<AdminSimple />} />
-              <Route path="media" element={<AdminSimple />} />
+              <Route path="customers" element={<AdminCustomers />} />
+              <Route path="settings" element={<AdminSettings />} />
+              <Route path="media" element={<AdminMedia />} />
             </Route>
           </Routes>
         </AnimatePresence>

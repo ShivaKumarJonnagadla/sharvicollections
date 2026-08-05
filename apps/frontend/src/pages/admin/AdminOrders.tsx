@@ -59,6 +59,20 @@ export function AdminOrders() {
                     <p>{o.customerName}</p>
                     <p className="text-xs text-ink/50">{o.customerEmail}</p>
                     <p className="text-xs text-ink/50">{o.customerPhone}</p>
+                    {o.shippingRequired && (
+                      <p className="mt-1 max-w-[200px] text-xs text-maroon-500">
+                        📦{' '}
+                        {[
+                          o.shippingAddress,
+                          o.shippingPostalCode,
+                          o.shippingCity,
+                          o.shippingCounty,
+                          o.shippingCountry,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </p>
+                    )}
                   </td>
                   <td className="p-4 text-ink/70">
                     {o.items.map((it) => (

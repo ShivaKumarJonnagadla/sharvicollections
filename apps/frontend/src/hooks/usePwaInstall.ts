@@ -20,14 +20,13 @@ export function isStandalone(): boolean {
   );
 }
 
-/** True on iPhone/iPod and iPadOS (which reports as Mac + touch). */
+/** True on any iOS/iPadOS device (iPadOS reports as Mac + touch). */
 export function isIosDevice(): boolean {
   if (typeof window === 'undefined') return false;
   const ua = window.navigator.userAgent;
   const iphone = /iphone|ipod|ipad/i.test(ua);
   const ipadOs = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(ua);
-  return (iphone || ipadOs) && isSafari;
+  return iphone || ipadOs;
 }
 
 /**

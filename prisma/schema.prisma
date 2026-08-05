@@ -199,6 +199,16 @@ model Order {
   paymentMethod   PaymentMethod
   paymentStatus   PaymentStatus @default(UNPAID)
   paymentRef      String?       // Swish payment reference
+
+  // Shipping (optional — toggled at checkout)
+  shippingRequired   Boolean @default(false)
+  shippingAddress    String?
+  shippingCity       String?
+  shippingCounty     String? // län / state
+  shippingPostalCode String? // postnummer
+  shippingCountry    String? @default("Sweden")
+  shippingCostMinor  Int     @default(0)
+
   subtotalMinor   Int
   totalMinor      Int
   currency        String        @default("SEK")
@@ -243,6 +253,15 @@ model Setting {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+// Monotonic counters (e.g. per-year order sequence). Never reused, so deleting
+// an order never causes an order-number collision.
+model Counter {
+  key   String @id
+  value Int    @default(0)
+
+  @@map("counters")
 }
 
 model AuditLog {

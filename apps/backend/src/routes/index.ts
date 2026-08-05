@@ -9,6 +9,7 @@ import orderRoutes from './order.routes.js';
 import uploadRoutes from './upload.routes.js';
 import analyticsRoutes from './analytics.routes.js';
 import consentRoutes from './consent.routes.js';
+import settingsRoutes from './settings.routes.js';
 
 const router = Router();
 
@@ -40,5 +41,6 @@ router.use('/orders', orderRoutes);
 router.use('/uploads', uploadRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/consent', consentRoutes);
+router.use('/settings', settingsRoutes);
 
 export default router;

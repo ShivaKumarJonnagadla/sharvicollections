@@ -2,11 +2,67 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Circle, Clock } from 'lucide-react';
 import { formatSEK, type OrderDTO } from '@sharvi/shared';
 import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import { PageLoader } from '@/components/PageLoader';
 import { Seo } from '@/components/Seo';
+
+const TRACK_STEPS = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'] as const;
+
+/** Horizontal order-status tracker. */
+function OrderTracker({ status }: { status: OrderDTO['status'] }) {
+  if (status === 'CANCELLED' || status === 'REFUNDED') {
+    return (
+      <div className="mt-8 rounded-xl bg-maroon-50 p-4 text-center text-sm text-maroon-700">
+        This order is {status.toLowerCase()}.
+      </div>
+    );
+  }
+  const currentIndex = Math.max(0, TRACK_STEPS.indexOf(status as (typeof TRACK_STEPS)[number]));
+  return (
+    <div className="mt-8">
+      <div className="flex items-center justify-between">
+        {TRACK_STEPS.map((step, i) => {
+          const done = i < currentIndex;
+          const active = i === currentIndex;
+          return (
+            <div key={step} className="flex flex-1 flex-col items-center">
+              <div className="flex w-full items-center">
+                {i > 0 && (
+                  <div className={cn('h-0.5 flex-1', i <= currentIndex ? 'bg-maroon-500' : 'bg-maroon-100')} />
+                )}
+                <div
+                  className={cn(
+                    'grid h-8 w-8 shrink-0 place-items-center rounded-full',
+                    done && 'bg-maroon-500 text-white',
+                    active && 'bg-maroon-600 text-white ring-4 ring-maroon-100',
+                    !done && !active && 'bg-maroon-100 text-maroon-400',
+                  )}
+                >
+                  {done ? (
+                    <CheckCircle2 className="h-4 w-4" />
+                  ) : active ? (
+                    <Clock className="h-4 w-4" />
+                  ) : (
+                    <Circle className="h-3 w-3" />
+                  )}
+                </div>
+                {i < TRACK_STEPS.length - 1 && (
+                  <div className={cn('h-0.5 flex-1', i < currentIndex ? 'bg-maroon-500' : 'bg-maroon-100')} />
+                )}
+              </div>
+              <span className={cn('mt-2 text-[10px] font-medium sm:text-xs', active ? 'text-maroon-700' : 'text-ink/50')}>
+                {step.charAt(0) + step.slice(1).toLowerCase()}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function OrderConfirmationPage() {
   const { orderNumber } = useParams();
@@ -17,6 +73,7 @@ export function OrderConfirmationPage() {
     queryKey: ['order', orderNumber],
     queryFn: () => api.get<OrderDTO>(`/orders/${orderNumber}`),
     enabled: Boolean(orderNumber),
+    refetchInterval: 60_000, // poll so the tracker reflects status updates
   });
 
   if (isLoading) return <PageLoader />;
@@ -63,7 +120,9 @@ export function OrderConfirmationPage() {
           </div>
         </dl>
 
-        <ul className="mx-auto mt-6 max-w-sm space-y-2 text-left text-sm">
+        <OrderTracker status={data.status} />
+
+        <ul className="mx-auto mt-8 max-w-sm space-y-2 border-t border-maroon-100 pt-6 text-left text-sm">
           {data.items.map((it) => (
             <li key={it.id} className="flex justify-between text-ink/70">
               <span>
@@ -72,6 +131,12 @@ export function OrderConfirmationPage() {
               <span>{formatSEK(it.lineTotalMinor, locale)}</span>
             </li>
           ))}
+          {data.shippingRequired && (
+            <li className="flex justify-between text-ink/70">
+              <span>{t('checkout.shipping')}</span>
+              <span>{formatSEK(data.shippingCostMinor, locale)}</span>
+            </li>
+          )}
         </ul>
 
         <Link to="/shop" className="btn-primary mt-8">
