@@ -64,7 +64,12 @@ function renderOrderEmail(order: OrderDTO): string {
   </body></html>`;
 }
 
-async function send(to: string, subject: string, html: string): Promise<void> {
+async function send(opts: {
+  to: string[];
+  cc?: string[];
+  subject: string;
+  html: string;
+}): Promise<void> {
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -72,7 +77,13 @@ async function send(to: string, subject: string, html: string): Promise<void> {
         Authorization: `Bearer ${env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, html }),
+      body: JSON.stringify({
+        from: env.EMAIL_FROM,
+        to: opts.to,
+        ...(opts.cc && opts.cc.length ? { cc: opts.cc } : {}),
+        subject: opts.subject,
+        html: opts.html,
+      }),
     });
     if (!res.ok) console.error('[email] Resend responded', res.status, await res.text());
   } catch (err) {
@@ -82,11 +93,13 @@ async function send(to: string, subject: string, html: string): Promise<void> {
 
 /**
  * Send order emails via Resend. Never throws (fire-and-forget).
- * - Always notifies the store owner (works with the shared onboarding sender).
- * - Emails the customer too — but Resend only allows this once a domain is
- *   verified and EMAIL_FROM uses it (the shared onboarding@resend.dev sender can
- *   only deliver to the Resend account owner). We skip the customer send while on
- *   the shared sender to avoid guaranteed 403s.
+ *
+ * Once a domain is verified in Resend and EMAIL_FROM uses it, the email goes
+ * TO the customer with a CC to the store owner (ORDER_NOTIFY_EMAIL) — exactly
+ * as intended. While still on the shared onboarding@resend.dev sender, Resend
+ * only permits delivery to the Resend account owner, so we fall back to sending
+ * the notification to the owner (customer delivery is impossible until a domain
+ * is verified — that's a Resend restriction, not a code limitation).
  */
 export async function sendOrderConfirmation(order: OrderDTO): Promise<void> {
   if (!env.emailConfigured) {
@@ -95,22 +108,28 @@ export async function sendOrderConfirmation(order: OrderDTO): Promise<void> {
   }
   const html = renderOrderEmail(order);
   const usingSharedSender = env.EMAIL_FROM.includes('onboarding@resend.dev');
+  const owner = env.ORDER_NOTIFY_EMAIL;
+  const customerSubject = `Your Sharvi Collections order ${order.orderNumber}`;
 
-  // Owner notification (always).
-  if (env.ORDER_NOTIFY_EMAIL) {
-    await send(
-      env.ORDER_NOTIFY_EMAIL,
-      `🛍️ New order ${order.orderNumber} — ${order.customerName}`,
-      html,
-    );
+  if (usingSharedSender) {
+    // Can only reach the Resend account owner — send the notification there.
+    if (owner) {
+      await send({
+        to: [owner],
+        subject: `🛍️ New order ${order.orderNumber} — ${order.customerName} (${order.customerEmail})`,
+        html,
+      });
+    } else {
+      console.warn('[email] shared sender + no ORDER_NOTIFY_EMAIL — no email sent');
+    }
+    return;
   }
 
-  // Customer confirmation (only once a verified domain sender is configured).
-  if (!usingSharedSender) {
-    await send(
-      order.customerEmail,
-      `Your Sharvi Collections order ${order.orderNumber}`,
-      html,
-    );
-  }
+  // Verified domain: email the customer, CC the store owner.
+  await send({
+    to: [order.customerEmail],
+    cc: owner ? [owner] : undefined,
+    subject: customerSubject,
+    html,
+  });
 }
