@@ -1,0 +1,56 @@
+# Local full-stack stack: Postgres + backend API + static frontend.
+# For production the app deploys to Vercel + Neon; this is for local/offline dev.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sharvi
+      POSTGRES_PASSWORD: sharvi
+      POSTGRES_DB: sharvi
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sharvi']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      DATABASE_URL: postgresql://sharvi:sharvi@db:5432/sharvi
+      DIRECT_URL: postgresql://sharvi:sharvi@db:5432/sharvi
+      JWT_SECRET: ${JWT_SECRET:-dev-access-secret-change-me-please-1234}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-change-me-please-1234}
+      CORS_ORIGINS: http://localhost:8080
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+    ports:
+      - '4000:4000'
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+      args:
+        VITE_API_URL: http://localhost:4000/api/v1
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - '8080:80'
+
+volumes:
+  db_data:

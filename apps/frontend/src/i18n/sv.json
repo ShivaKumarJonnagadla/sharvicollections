@@ -1,0 +1,166 @@
+{
+  "brand": {
+    "name": "Sharvi Collections",
+    "tagline": "Prisvärda mångkulturella smycken för varje tillfälle"
+  },
+  "nav": {
+    "home": "Hem",
+    "shop": "Butik",
+    "newArrivals": "Nyheter",
+    "trending": "Populärt",
+    "search": "Sök smycken…",
+    "cart": "Varukorg",
+    "menu": "Meny"
+  },
+  "hero": {
+    "subtitle": "Vardagsbruk. Speciella tillfällen. Omtänksamma gåvor.",
+    "text": "Baserade i Älmhult, Sverige, erbjuder Sharvi Collections prisvärda mångkulturella smycken inspirerade av västerländska, indiska och mellanösternstilar. Upptäck eleganta designer för varje tillfälle utan att kompromissa med din budget.",
+    "cta": "Utforska kollektionen",
+    "ctaSecondary": "Nyheter"
+  },
+  "sections": {
+    "featured": "Utvalda kollektioner",
+    "newArrivals": "Nyheter",
+    "trending": "Populärt just nu",
+    "popular": "Populära produkter",
+    "whyUs": "Varför välja oss",
+    "reviews": "Vad våra kunder säger",
+    "findUs": "Hitta oss"
+  },
+  "why": {
+    "affordable": "Prisvärd lyx",
+    "affordableText": "Exklusiva smycken som respekterar din budget.",
+    "multicultural": "Mångkulturell design",
+    "multiculturalText": "Västerländska, indiska och mellanösterninspirationer.",
+    "quality": "Anti-tarnish-kvalitet",
+    "qualityText": "Slitstarka ytor gjorda för att hålla.",
+    "local": "Baserade i Sverige",
+    "localText": "Skickas med omsorg från Älmhult, Sverige."
+  },
+  "product": {
+    "addToCart": "Lägg i varukorg",
+    "added": "Tillagd",
+    "quickAdd": "Snabbköp",
+    "outOfStock": "Slut i lager",
+    "inStock": "I lager",
+    "description": "Beskrivning",
+    "related": "Du kanske också gillar",
+    "share": "Dela",
+    "shareWhatsApp": "Dela på WhatsApp",
+    "category": "Kategori",
+    "subcategory": "Underkategori",
+    "availability": "Tillgänglighet",
+    "badgeNew": "Ny",
+    "badgeTrending": "Populär",
+    "badgeSale": "Rea"
+  },
+  "shop": {
+    "title": "Alla smycken",
+    "filters": "Filter",
+    "sort": "Sortera",
+    "sortNewest": "Nyaste",
+    "sortPriceLow": "Pris: Lågt till högt",
+    "sortPriceHigh": "Pris: Högt till lågt",
+    "sortAlpha": "Alfabetisk",
+    "priceRange": "Prisintervall",
+    "category": "Kategori",
+    "subcategory": "Underkategori",
+    "allCategories": "Alla kategorier",
+    "results": "{{count}} produkter",
+    "empty": "Inga produkter matchar dina filter.",
+    "clear": "Rensa filter"
+  },
+  "cart": {
+    "title": "Din varukorg",
+    "empty": "Din varukorg är tom",
+    "emptyCta": "Fortsätt handla",
+    "subtotal": "Delsumma",
+    "checkout": "Till kassan",
+    "remove": "Ta bort",
+    "quantity": "Antal",
+    "continueShopping": "Fortsätt handla"
+  },
+  "checkout": {
+    "title": "Kassa",
+    "contact": "Kontaktuppgifter",
+    "name": "Fullständigt namn",
+    "email": "E-postadress",
+    "phone": "Telefonnummer",
+    "note": "Ordernotering (valfritt)",
+    "payment": "Betalningsmetod",
+    "cash": "Kontant",
+    "cashHint": "Betala kontant vid upphämtning eller leverans.",
+    "swish": "Swish",
+    "swishHint": "Betala direkt med Swish.",
+    "placeOrder": "Slutför beställning",
+    "placing": "Skickar beställning…",
+    "summary": "Ordersammanfattning",
+    "total": "Totalt",
+    "swishTitle": "Slutför din Swish-betalning",
+    "swishOpen": "Öppna Swish-appen",
+    "swishNotInstalled": "Har du inte Swish?",
+    "swishInstall": "Ladda ner Swish från din appbutik och skicka sedan beloppet till {{number}} med referens {{ref}}.",
+    "swishReference": "Betalningsreferens",
+    "swishScan": "Skanna för att betala"
+  },
+  "order": {
+    "confirmedTitle": "Tack för din beställning!",
+    "confirmedText": "Vi har tagit emot din beställning och hör av oss inom kort.",
+    "number": "Ordernummer",
+    "status": "Status",
+    "total": "Totalt",
+    "backHome": "Tillbaka till startsidan",
+    "notFound": "Beställningen hittades inte"
+  },
+  "whatsapp": {
+    "title": "Gå med i vår WhatsApp-grupp",
+    "text": "Få exklusiva förhandsvisningar av nya lagerleveranser och kataloger före alla andra.",
+    "fallback": "Om du inte kan gå med, skicka ett meddelande till oss på WhatsApp på {{number}}.",
+    "join": "Gå med i vår WhatsApp-grupp",
+    "message": "Meddela oss på WhatsApp"
+  },
+  "consent": {
+    "title": "Din integritet är viktig",
+    "body": "Vi använder INTE spårningscookies. Vi säljer INTE personlig information. Endast din e-postadress lagras för orderbekräftelse. Ingen analys körs förrän du samtycker.",
+    "accept": "Acceptera",
+    "decline": "Neka icke-nödvändiga",
+    "revoke": "Återkalla samtycke",
+    "manage": "Integritetsinställningar"
+  },
+  "footer": {
+    "shop": "Butik",
+    "about": "Om oss",
+    "contact": "Kontakt",
+    "findUs": "Älmhult, Sverige",
+    "phone": "Telefon",
+    "whatsapp": "WhatsApp",
+    "rights": "Alla rättigheter förbehållna.",
+    "privacy": "Integritet",
+    "madeIn": "Designad med kärlek i Sverige"
+  },
+  "admin": {
+    "login": "Admininloggning",
+    "email": "E-post",
+    "password": "Lösenord",
+    "signIn": "Logga in",
+    "signingIn": "Loggar in…",
+    "logout": "Logga ut",
+    "dashboard": "Översikt",
+    "products": "Produkter",
+    "orders": "Beställningar",
+    "analytics": "Analys",
+    "customers": "Kunder",
+    "settings": "Inställningar",
+    "media": "Mediabibliotek",
+    "revenue": "Intäkter",
+    "totalOrders": "Beställningar",
+    "totalProducts": "Produkter",
+    "totalCustomers": "Kunder"
+  },
+  "common": {
+    "loading": "Laddar…",
+    "error": "Något gick fel.",
+    "retry": "Försök igen",
+    "kr": "kr"
+  }
+}

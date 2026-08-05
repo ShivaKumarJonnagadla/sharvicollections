@@ -1,0 +1,281 @@
+// ---------------------------------------------------------------------------
+// Sharvi Collections — Prisma Schema (Neon PostgreSQL)
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"] // rhel target for Vercel serverless
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ----------------------------- Enums --------------------------------------
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  SWISH
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum ProductBadge {
+  NONE
+  NEW
+  TRENDING
+  SALE
+}
+
+enum ConsentAction {
+  GRANTED
+  REVOKED
+  UPDATED
+}
+
+// ----------------------------- Auth ---------------------------------------
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         Role      @default(CUSTOMER)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+
+  @@index([role])
+  @@map("users")
+}
+
+// Refresh tokens are stored hashed so a DB leak cannot be replayed.
+model RefreshToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  userAgent  String?
+  ip         String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// ----------------------------- Catalogue ----------------------------------
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subcategories Subcategory[]
+  products      Product[]
+
+  @@index([slug])
+  @@map("categories")
+}
+
+model Subcategory {
+  id         String   @id @default(cuid())
+  categoryId String
+  name       String
+  slug       String
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@unique([categoryId, slug])
+  @@index([categoryId])
+  @@map("subcategories")
+}
+
+model Product {
+  id            String       @id @default(cuid())
+  name          String
+  slug          String       @unique
+  description   String?
+  // Price stored in minor units (öre). 349 kr => 34900. Avoids float rounding.
+  priceMinor    Int
+  compareAtMinor Int?        // original price for SALE badge
+  currency      String       @default("SEK")
+  sku           String?      @unique
+  stock         Int          @default(0)
+  isPublished   Boolean      @default(true) // hidden products never appear on storefront
+  isFeatured    Boolean      @default(false)
+  badge         ProductBadge @default(NONE)
+  viewCount     Int          @default(0)
+  categoryId    String
+  subcategoryId String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  category    Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  subcategory Subcategory?   @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+  images      ProductImage[]
+  orderItems  OrderItem[]
+
+  @@index([categoryId])
+  @@index([subcategoryId])
+  @@index([isPublished])
+  @@index([badge])
+  @@index([createdAt])
+  @@map("products")
+}
+
+model ProductImage {
+  id           String   @id @default(cuid())
+  productId    String
+  url          String
+  // Cloudinary public id — needed to delete/transform the asset.
+  publicId     String
+  alt          String?
+  width        Int?
+  height       Int?
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+// ----------------------------- Orders -------------------------------------
+
+model Order {
+  id              String        @id @default(cuid())
+  // Human-friendly reference, e.g. SC-2026-0001 — also used as Swish payment ref.
+  orderNumber     String        @unique
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  note            String?
+  status          OrderStatus   @default(PENDING)
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus @default(UNPAID)
+  paymentRef      String?       // Swish payment reference
+  subtotalMinor   Int
+  totalMinor      Int
+  currency        String        @default("SEK")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  items OrderItem[]
+
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([customerEmail])
+  @@map("orders")
+}
+
+// Order items snapshot product data so historical orders stay correct
+// even if the product is later edited or deleted.
+model OrderItem {
+  id            String  @id @default(cuid())
+  orderId       String
+  productId     String?
+  productName   String
+  productImage  String?
+  unitPriceMinor Int
+  quantity      Int
+  lineTotalMinor Int
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+// ----------------------------- Meta ---------------------------------------
+
+// Flexible key/value store for storefront settings (hero text, banners, etc.)
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String   // e.g. "product.create", "order.update_status", "auth.login"
+  entity    String?  // e.g. "Product"
+  entityId  String?
+  metadata  Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// GDPR consent trail — one row per consent event.
+model ConsentLog {
+  id            String        @id @default(cuid())
+  // Anonymous visitor id (from a first-party cookie) — no PII required.
+  visitorId     String
+  action        ConsentAction
+  necessary     Boolean       @default(true)
+  preferences   Boolean       @default(false)
+  policyVersion String
+  ip            String?
+  userAgent     String?
+  createdAt     DateTime      @default(now())
+
+  @@index([visitorId])
+  @@index([createdAt])
+  @@map("consent_logs")
+}

@@ -1,0 +1,38 @@
+# ---- Build stage ---------------------------------------------------------
+FROM node:22-slim AS build
+WORKDIR /app
+
+# OpenSSL is required by Prisma engines.
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+# Install dependencies (workspace-aware) using only manifests for better caching.
+COPY package*.json ./
+COPY prisma ./prisma
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/backend/package.json ./apps/backend/
+RUN npm install
+
+# Copy sources and build shared + backend.
+COPY packages/shared ./packages/shared
+COPY apps/backend ./apps/backend
+RUN npm run build --workspace packages/shared \
+  && npm run build --workspace apps/backend
+
+# ---- Runtime stage -------------------------------------------------------
+FROM node:22-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+# Copy the installed node_modules (incl. generated Prisma client) and build output.
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages/shared/dist ./packages/shared/dist
+COPY --from=build /app/packages/shared/package.json ./packages/shared/
+COPY --from=build /app/apps/backend/dist ./apps/backend/dist
+COPY --from=build /app/apps/backend/package.json ./apps/backend/
+COPY --from=build /app/prisma ./prisma
+COPY package.json ./
+
+EXPOSE 4000
+USER node
+CMD ["node", "apps/backend/dist/server.js"]

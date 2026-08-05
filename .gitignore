@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Build outputs
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# Prisma
+prisma/*.db
+prisma/migrations/dev.db*
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+Thumbs.db
+
+# Vercel
+.vercel
+
+# Misc
+.cache/
+tmp/

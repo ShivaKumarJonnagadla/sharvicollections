@@ -1,0 +1,102 @@
+{
+  "_note": "Initial product import manifest. Images already staged in data/product-images/ as 01..12. Necklaces -> 'Necklace' category, earrings -> 'Earring'. Rename / recategorize later from the admin dashboard. Run: npm run import:products",
+  "defaultCategory": "New Arrivals",
+  "products": [
+    {
+      "file": "01.jpg",
+      "name": "Multi-Tone Hammered Statement Necklace Set",
+      "category": "Necklace",
+      "priceKr": 299,
+      "badge": "NEW",
+      "description": "Bold hammered statement necklace with matching stud earrings in rose-gold, champagne and pearl-white tones. A striking Western-inspired set for special occasions."
+    },
+    {
+      "file": "02.jpg",
+      "name": "Antique Amethyst & CZ Necklace Set",
+      "category": "Necklace",
+      "priceKr": 449,
+      "badge": "NEW",
+      "description": "Regal antique-gold necklace and earring set featuring soft amethyst stones framed by sparkling cubic-zirconia florals. Indian-inspired craftsmanship for festive wear."
+    },
+    {
+      "file": "03.jpg",
+      "name": "Antique Rose Floral Drop Earrings",
+      "category": "Earring",
+      "priceKr": 199,
+      "badge": "NEW",
+      "description": "Antique-gold teardrop drop earrings with delicate blush floral stonework. Vintage charm to elevate ethnic and fusion looks."
+    },
+    {
+      "file": "04.jpg",
+      "name": "Ruby & Gold Bead Chain Necklace",
+      "category": "Necklace",
+      "priceKr": 349,
+      "badge": "NEW",
+      "description": "Dainty gold-tone chain with ruby-red beads and filigree gold beads, paired with matching studs. Everyday elegance with a cultural touch."
+    },
+    {
+      "file": "05.jpg",
+      "name": "Black Bead CZ Mangalsutra Chain",
+      "category": "Necklace",
+      "priceKr": 279,
+      "badge": "NEW",
+      "description": "Delicate gold-tone chain with black beads and twin cubic-zirconia pavé beads. A modern, minimal take on the classic mangalsutra."
+    },
+    {
+      "file": "06.jpg",
+      "name": "Gold Heart Charm Necklace",
+      "category": "Necklace",
+      "priceKr": 189,
+      "badge": "NEW",
+      "description": "Minimal gold-tone necklace with a row of open heart charms. Light, sweet and perfect for everyday layering."
+    },
+    {
+      "file": "07.jpg",
+      "name": "Black Bead CZ Chain Necklace",
+      "category": "Necklace",
+      "priceKr": 259,
+      "badge": "NEW",
+      "description": "Gold-tone chain with black-bead detailing and cubic-zirconia pavé accents. Subtle sparkle for daily wear."
+    },
+    {
+      "file": "08.jpg",
+      "name": "CZ Bow Pendant Black Bead Necklace",
+      "category": "Necklace",
+      "priceKr": 229,
+      "badge": "NEW",
+      "description": "Gold-tone necklace with a cubic-zirconia bow pendant and delicate black-bead stations. Playful yet elegant."
+    },
+    {
+      "file": "09.jpg",
+      "name": "Tri-Tone Heart Necklace Set",
+      "category": "Necklace",
+      "priceKr": 329,
+      "badge": "NEW",
+      "description": "Tri-tone enamel heart necklace with matching earrings, accented with clear crystals. Playful multicultural charm for casual outings."
+    },
+    {
+      "file": "10.jpg",
+      "name": "Cubic Zirconia Line Drop Earrings",
+      "category": "Earring",
+      "priceKr": 389,
+      "badge": "NEW",
+      "description": "Long cubic-zirconia line drop earrings in a lustrous gold-tone finish. Red-carpet sparkle for special evenings."
+    },
+    {
+      "file": "11.jpg",
+      "name": "Multicolour CZ Leaf Choker",
+      "category": "Necklace",
+      "priceKr": 219,
+      "badge": "NEW",
+      "description": "Dainty gold-tone choker with multicolour cubic-zirconia bezels and tiny leaf charms. Fresh, versatile and lightweight."
+    },
+    {
+      "file": "12.jpg",
+      "name": "Gold Star & Leaf Station Necklace",
+      "category": "Necklace",
+      "priceKr": 299,
+      "badge": "NEW",
+      "description": "Gold-tone station necklace scattered with stars, leaves and multicolour cubic-zirconia charms. A whimsical everyday statement."
+    }
+  ]
+}

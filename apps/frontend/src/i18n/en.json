@@ -1,0 +1,166 @@
+{
+  "brand": {
+    "name": "Sharvi Collections",
+    "tagline": "Affordable Multicultural Jewelry for Every Moment"
+  },
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "newArrivals": "New Arrivals",
+    "trending": "Trending",
+    "search": "Search jewellery…",
+    "cart": "Cart",
+    "menu": "Menu"
+  },
+  "hero": {
+    "subtitle": "Everyday Wear. Special Occasions. Thoughtful Gifts.",
+    "text": "Based in Älmhult, Sweden, Sharvi Collections brings you affordable multicultural jewellery inspired by Western, Indian and Middle Eastern styles. Discover elegant designs for every occasion without compromising your budget.",
+    "cta": "Explore the Collection",
+    "ctaSecondary": "New Arrivals"
+  },
+  "sections": {
+    "featured": "Featured Collections",
+    "newArrivals": "New Arrivals",
+    "trending": "Trending Now",
+    "popular": "Popular Products",
+    "whyUs": "Why Choose Us",
+    "reviews": "What Our Customers Say",
+    "findUs": "Find Us"
+  },
+  "why": {
+    "affordable": "Affordable Luxury",
+    "affordableText": "Premium-looking pieces that respect your budget.",
+    "multicultural": "Multicultural Designs",
+    "multiculturalText": "Western, Indian and Middle Eastern inspirations.",
+    "quality": "Anti-Tarnish Quality",
+    "qualityText": "Durable finishes made to last through every wear.",
+    "local": "Based in Sweden",
+    "localText": "Shipped with care from Älmhult, Sweden."
+  },
+  "product": {
+    "addToCart": "Add to Cart",
+    "added": "Added",
+    "quickAdd": "Quick add",
+    "outOfStock": "Out of stock",
+    "inStock": "In stock",
+    "description": "Description",
+    "related": "You may also like",
+    "share": "Share",
+    "shareWhatsApp": "Share on WhatsApp",
+    "category": "Category",
+    "subcategory": "Subcategory",
+    "availability": "Availability",
+    "badgeNew": "New",
+    "badgeTrending": "Trending",
+    "badgeSale": "Sale"
+  },
+  "shop": {
+    "title": "Shop All Jewellery",
+    "filters": "Filters",
+    "sort": "Sort",
+    "sortNewest": "Newest",
+    "sortPriceLow": "Price: Low to High",
+    "sortPriceHigh": "Price: High to Low",
+    "sortAlpha": "Alphabetical",
+    "priceRange": "Price range",
+    "category": "Category",
+    "subcategory": "Subcategory",
+    "allCategories": "All categories",
+    "results": "{{count}} products",
+    "empty": "No products match your filters.",
+    "clear": "Clear filters"
+  },
+  "cart": {
+    "title": "Your Cart",
+    "empty": "Your cart is empty",
+    "emptyCta": "Continue shopping",
+    "subtotal": "Subtotal",
+    "checkout": "Checkout",
+    "remove": "Remove",
+    "quantity": "Quantity",
+    "continueShopping": "Continue shopping"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "contact": "Contact details",
+    "name": "Full name",
+    "email": "Email address",
+    "phone": "Phone number",
+    "note": "Order note (optional)",
+    "payment": "Payment method",
+    "cash": "Cash",
+    "cashHint": "Pay in cash on pickup or delivery.",
+    "swish": "Swish",
+    "swishHint": "Pay instantly with Swish.",
+    "placeOrder": "Place Order",
+    "placing": "Placing order…",
+    "summary": "Order summary",
+    "total": "Total",
+    "swishTitle": "Complete your Swish payment",
+    "swishOpen": "Open Swish app",
+    "swishNotInstalled": "Swish not installed?",
+    "swishInstall": "Download Swish from your app store, then send the amount to {{number}} with reference {{ref}}.",
+    "swishReference": "Payment reference",
+    "swishScan": "Scan to pay"
+  },
+  "order": {
+    "confirmedTitle": "Thank you for your order!",
+    "confirmedText": "We've received your order and will be in touch shortly.",
+    "number": "Order number",
+    "status": "Status",
+    "total": "Total",
+    "backHome": "Back to home",
+    "notFound": "Order not found"
+  },
+  "whatsapp": {
+    "title": "Join our WhatsApp Group",
+    "text": "Get exclusive early previews of new stock drops and catalogues before anyone else.",
+    "fallback": "If you're unable to join, message us on WhatsApp at {{number}}.",
+    "join": "Join our WhatsApp Group",
+    "message": "Message us on WhatsApp"
+  },
+  "consent": {
+    "title": "Your privacy matters",
+    "body": "We do NOT use tracking cookies. We do NOT sell personal information. Only your email address is stored for order confirmation. No analytics run until you consent.",
+    "accept": "Accept",
+    "decline": "Decline non-essential",
+    "revoke": "Revoke consent",
+    "manage": "Privacy settings"
+  },
+  "footer": {
+    "shop": "Shop",
+    "about": "About",
+    "contact": "Contact",
+    "findUs": "Älmhult, Sweden",
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "rights": "All rights reserved.",
+    "privacy": "Privacy",
+    "madeIn": "Designed with love in Sweden"
+  },
+  "admin": {
+    "login": "Admin Login",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "analytics": "Analytics",
+    "customers": "Customers",
+    "settings": "Settings",
+    "media": "Media Library",
+    "revenue": "Revenue",
+    "totalOrders": "Orders",
+    "totalProducts": "Products",
+    "totalCustomers": "Customers"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong.",
+    "retry": "Retry",
+    "kr": "kr"
+  }
+}
