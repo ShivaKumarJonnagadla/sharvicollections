@@ -91,7 +91,7 @@ export function HomePage() {
             <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-1.5 text-sm text-maroon-600">
               <Sparkles className="h-4 w-4 text-gold-400" /> {t('brand.tagline')}
             </span>
-            <h1 className="mt-5 font-serif text-4xl leading-tight text-maroon-800 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-5 font-serif text-4xl leading-[1.3] text-maroon-800 sm:text-5xl lg:text-6xl">
               {t('hero.subtitle')}
             </h1>
             <p className="mt-5 max-w-xl text-lg text-ink/70">{t('hero.text')}</p>
