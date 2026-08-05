@@ -41,7 +41,7 @@ export function AdminLogin() {
     'w-full rounded-xl border border-maroon-200 bg-white px-4 py-3 text-sm outline-none focus:border-maroon-500';
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-ivory px-4">
+    <div className="admin-scope flex min-h-screen items-center justify-center bg-ivory px-4">
       <Seo title={t('admin.login')} />
       <motion.div
         initial={{ opacity: 0, y: 20 }}

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
@@ -54,7 +54,10 @@ export function ShopPage() {
       <Seo title={title} path="/shop" />
       <div className="container-px py-10">
         <nav className="mb-2 text-sm text-ink/50" aria-label="Breadcrumb">
-          <span>{t('nav.home')}</span> / <span className="text-maroon-600">{title}</span>
+          <Link to="/" className="hover:text-maroon-600">
+            {t('nav.home')}
+          </Link>{' '}
+          / <span className="text-maroon-600">{title}</span>
         </nav>
         <h1 className="font-serif text-3xl text-maroon-700 sm:text-4xl">{title}</h1>
         <p className="mt-1 text-sm text-ink/60">

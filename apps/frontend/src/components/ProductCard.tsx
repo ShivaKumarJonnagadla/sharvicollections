@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Heart, ShoppingBag } from 'lucide-react';
-import { formatSEK, type ProductDTO } from '@sharvi/shared';
+import { formatSEK, productName, type ProductDTO } from '@sharvi/shared';
 import { cloudinaryUrl, cn } from '@/lib/utils';
 import { useCart } from '@/stores/cart';
 import { useUi } from '@/stores/ui';
@@ -23,6 +23,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
 
   const images = product.images.length ? product.images : [];
   const locale = i18n.language.startsWith('sv') ? 'sv' : 'en';
+  const displayName = productName(product, locale);
 
   const go = (dir: 1 | -1) => (e: React.MouseEvent) => {
     e.preventDefault();
@@ -135,7 +136,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
 
         <div className="mt-3 space-y-1">
           <p className="text-xs uppercase tracking-wide text-maroon-400">{product.category.name}</p>
-          <h3 className="line-clamp-1 font-serif text-lg text-ink">{product.name}</h3>
+          <h3 className="line-clamp-1 font-serif text-lg text-ink">{displayName}</h3>
           <div className="flex items-center gap-2">
             <span className="font-medium text-maroon-700">
               {formatSEK(product.priceMinor, locale)}

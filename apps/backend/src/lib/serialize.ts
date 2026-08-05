@@ -9,8 +9,10 @@ export function serializeProduct(p: ProductWithRelations): ProductDTO {
   return {
     id: p.id,
     name: p.name,
+    nameSv: p.nameSv,
     slug: p.slug,
     description: p.description,
+    descriptionSv: p.descriptionSv,
     priceMinor: p.priceMinor,
     compareAtMinor: p.compareAtMinor,
     currency: p.currency,

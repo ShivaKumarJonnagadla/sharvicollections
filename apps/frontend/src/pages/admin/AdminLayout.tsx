@@ -72,7 +72,7 @@ export function AdminLayout() {
   );
 
   return (
-    <div className="min-h-screen bg-ivory lg:grid lg:grid-cols-[260px_1fr]">
+    <div className="admin-scope min-h-screen bg-ivory lg:grid lg:grid-cols-[260px_1fr]">
       {/* Desktop sidebar */}
       <aside className="hidden border-r border-maroon-100 bg-white lg:block">
         <SidebarContent />

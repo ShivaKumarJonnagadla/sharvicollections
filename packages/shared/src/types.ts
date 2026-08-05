@@ -41,8 +41,10 @@ export interface ProductImageDTO {
 export interface ProductDTO {
   id: string;
   name: string;
+  nameSv: string | null;
   slug: string;
   description: string | null;
+  descriptionSv: string | null;
   priceMinor: number;
   compareAtMinor: number | null;
   currency: string;

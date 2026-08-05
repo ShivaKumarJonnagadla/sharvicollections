@@ -59,6 +59,13 @@ export function HomePage() {
     { name: 'Sofia M.', text: 'Fast, friendly and the jewellery looks so much more expensive than it is.' },
   ];
 
+  // Pin the hero to the Gold Star & Leaf Station Necklace, falling back to the
+  // first featured product if it isn't available.
+  const pool = [...(data?.featured ?? []), ...(data?.newArrivals ?? []), ...(data?.trending ?? [])];
+  const heroProduct =
+    pool.find((p) => p.slug === 'gold-star-and-leaf-station-necklace') ?? data?.featured?.[0];
+  const heroImage = heroProduct?.images?.[0]?.url;
+
   return (
     <>
       <Seo
@@ -105,10 +112,10 @@ export function HomePage() {
             className="relative"
           >
             <div className="animate-float">
-              {data?.featured?.[0]?.images?.[0] ? (
+              {heroImage ? (
                 <img
-                  src={data.featured[0].images[0].url}
-                  alt={data.featured[0].name}
+                  src={heroImage}
+                  alt={heroProduct?.name ?? 'Sharvi Collections'}
                   className="mx-auto aspect-[4/5] w-full max-w-md rounded-[2rem] object-cover shadow-soft"
                 />
               ) : (

@@ -5,8 +5,10 @@ import type { ProductDTO } from '@sharvi/shared';
 const product = (id: string, priceMinor: number): ProductDTO => ({
   id,
   name: `Product ${id}`,
+  nameSv: null,
   slug: `product-${id}`,
   description: null,
+  descriptionSv: null,
   priceMinor,
   compareAtMinor: null,
   currency: 'SEK',

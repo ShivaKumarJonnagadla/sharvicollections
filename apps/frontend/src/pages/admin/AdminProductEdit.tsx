@@ -18,7 +18,9 @@ interface ImageState {
 
 interface FormState {
   name: string;
+  nameSv: string;
   description: string;
+  descriptionSv: string;
   priceKr: string;
   compareAtKr: string;
   stock: string;
@@ -31,7 +33,9 @@ interface FormState {
 
 const empty: FormState = {
   name: '',
+  nameSv: '',
   description: '',
+  descriptionSv: '',
   priceKr: '',
   compareAtKr: '',
   stock: '10',
@@ -69,7 +73,9 @@ export function AdminProductEdit() {
     if (!p) return;
     setForm({
       name: p.name,
+      nameSv: p.nameSv ?? '',
       description: p.description ?? '',
+      descriptionSv: p.descriptionSv ?? '',
       priceKr: String(p.priceMinor / 100),
       compareAtKr: p.compareAtMinor ? String(p.compareAtMinor / 100) : '',
       stock: String(p.stock),
@@ -131,7 +137,9 @@ export function AdminProductEdit() {
 
     const body = {
       name: form.name,
+      nameSv: form.nameSv || null,
       description: form.description || undefined,
+      descriptionSv: form.descriptionSv || null,
       priceMinor: Math.round(Number(form.priceKr) * 100),
       compareAtMinor: form.compareAtKr ? Math.round(Number(form.compareAtKr) * 100) : null,
       stock: Number(form.stock),
@@ -227,18 +235,49 @@ export function AdminProductEdit() {
 
       {/* Details */}
       <section className="card space-y-4 p-6">
-        <div>
-          <label className="mb-1 block text-sm text-ink/70">Name</label>
-          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 flex items-center gap-2 text-sm text-ink/70">
+              Name <span className="rounded bg-maroon-50 px-1.5 text-xs text-maroon-600">EN</span>
+            </label>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
+          </div>
+          <div>
+            <label className="mb-1 flex items-center gap-2 text-sm text-ink/70">
+              Namn <span className="rounded bg-gold-50 px-1.5 text-xs text-gold-600">SV</span>
+            </label>
+            <input
+              value={form.nameSv}
+              onChange={(e) => setForm({ ...form, nameSv: e.target.value })}
+              placeholder="Swedish (optional — falls back to English)"
+              className={inputCls}
+            />
+          </div>
         </div>
-        <div>
-          <label className="mb-1 block text-sm text-ink/70">Description</label>
-          <textarea
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={4}
-            className={inputCls}
-          />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 flex items-center gap-2 text-sm text-ink/70">
+              Description <span className="rounded bg-maroon-50 px-1.5 text-xs text-maroon-600">EN</span>
+            </label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={4}
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className="mb-1 flex items-center gap-2 text-sm text-ink/70">
+              Beskrivning <span className="rounded bg-gold-50 px-1.5 text-xs text-gold-600">SV</span>
+            </label>
+            <textarea
+              value={form.descriptionSv}
+              onChange={(e) => setForm({ ...form, descriptionSv: e.target.value })}
+              rows={4}
+              placeholder="Swedish (optional — falls back to English)"
+              className={inputCls}
+            />
+          </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>

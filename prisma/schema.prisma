@@ -134,9 +134,11 @@ model Subcategory {
 
 model Product {
   id            String       @id @default(cuid())
-  name          String
+  name          String       // English (default/fallback)
+  nameSv        String?      // Swedish translation
   slug          String       @unique
-  description   String?
+  description   String?      // English (default/fallback)
+  descriptionSv String?      // Swedish translation
   // Price stored in minor units (öre). 349 kr => 34900. Avoids float rounding.
   priceMinor    Int
   compareAtMinor Int?        // original price for SALE badge

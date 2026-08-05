@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import { Banknote, Smartphone } from 'lucide-react';
-import { checkoutSchema, formatSEK, type CheckoutInput, type OrderDTO } from '@sharvi/shared';
+import { z } from 'zod';
+import { checkoutSchema, formatSEK, type OrderDTO } from '@sharvi/shared';
 import { useCart } from '@/stores/cart';
 import { api, ApiError } from '@/lib/api';
 import { cloudinaryUrl } from '@/lib/utils';
@@ -22,14 +23,20 @@ export function CheckoutPage() {
   const [swishOrder, setSwishOrder] = useState<OrderDTO | null>(null);
   const [qr, setQr] = useState<string | null>(null);
 
+  // The form only collects contact + payment; cart items are added on submit,
+  // so validate against the schema WITHOUT the `items` field (otherwise RHF
+  // blocks submit because the form has no items input).
+  const formSchema = checkoutSchema.omit({ items: true });
+  type FormValues = z.infer<typeof formSchema>;
+
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<CheckoutInput>({
-    resolver: zodResolver(checkoutSchema),
-    defaultValues: { paymentMethod: 'SWISH', items: [] },
+  } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { paymentMethod: 'SWISH' },
   });
 
   const paymentMethod = watch('paymentMethod');
@@ -43,8 +50,12 @@ export function CheckoutPage() {
     }
   }, [swishOrder]);
 
-  const onSubmit = async (form: CheckoutInput) => {
+  const onSubmit = async (form: FormValues) => {
     setServerError(null);
+    if (items.length === 0) {
+      setServerError(t('cart.empty'));
+      return;
+    }
     try {
       const order = await api.post<OrderDTO>('/orders', {
         ...form,
@@ -128,8 +139,8 @@ export function CheckoutPage() {
 
       <div className="grid gap-10 lg:grid-cols-[1fr_380px]">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <fieldset className="card space-y-4 p-6">
-            <legend className="px-2 font-serif text-lg text-maroon-700">{t('checkout.contact')}</legend>
+          <section className="card space-y-4 p-6">
+            <h2 className="font-serif text-lg text-maroon-700">{t('checkout.contact')}</h2>
 
             <div>
               <label className="mb-1 block text-sm text-ink/70">{t('checkout.name')}</label>
@@ -160,10 +171,10 @@ export function CheckoutPage() {
               <label className="mb-1 block text-sm text-ink/70">{t('checkout.note')}</label>
               <textarea {...register('note')} rows={2} className={inputCls} />
             </div>
-          </fieldset>
+          </section>
 
-          <fieldset className="card space-y-3 p-6">
-            <legend className="px-2 font-serif text-lg text-maroon-700">{t('checkout.payment')}</legend>
+          <section className="card space-y-3 p-6">
+            <h2 className="font-serif text-lg text-maroon-700">{t('checkout.payment')}</h2>
 
             <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-maroon-200 p-4 has-[:checked]:border-maroon-500 has-[:checked]:bg-maroon-50">
               <input {...register('paymentMethod')} type="radio" value="SWISH" className="accent-maroon-600" />
@@ -182,7 +193,7 @@ export function CheckoutPage() {
                 <span className="block text-xs text-ink/60">{t('checkout.cashHint')}</span>
               </span>
             </label>
-          </fieldset>
+          </section>
 
           {serverError && (
             <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{serverError}</p>

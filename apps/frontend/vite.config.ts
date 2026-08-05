@@ -9,6 +9,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // NOTE: dev SW is disabled — Workbox's generateSW needs a global `crypto`
+      // that Node 18 lacks. The PWA (manifest + SW + install prompt) is fully
+      // active in the production build (Vercel runs Node 20+).
       includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
         name: 'Sharvi Collections',

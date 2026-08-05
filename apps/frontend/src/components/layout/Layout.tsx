@@ -4,6 +4,7 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { CartDrawer } from '@/components/CartDrawer';
 import { CookieConsent } from '@/components/CookieConsent';
+import { PwaInstall } from '@/components/PwaInstall';
 
 /** Storefront shell: header, animated page outlet, footer, cart, consent. */
 export function Layout() {
@@ -30,6 +31,7 @@ export function Layout() {
       <Footer />
       <CartDrawer />
       <CookieConsent />
+      <PwaInstall />
     </div>
   );
 }

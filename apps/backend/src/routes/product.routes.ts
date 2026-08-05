@@ -230,8 +230,10 @@ router.post(
     const product = await prisma.product.create({
       data: {
         name: input.name,
+        nameSv: input.nameSv ?? null,
         slug,
         description: input.description,
+        descriptionSv: input.descriptionSv ?? null,
         priceMinor: input.priceMinor,
         compareAtMinor: input.compareAtMinor ?? null,
         sku: input.sku,
@@ -276,7 +278,9 @@ router.patch(
 
     const data: Prisma.ProductUpdateInput = {
       name: input.name,
+      nameSv: input.nameSv,
       description: input.description,
+      descriptionSv: input.descriptionSv,
       priceMinor: input.priceMinor,
       compareAtMinor: input.compareAtMinor,
       sku: input.sku,

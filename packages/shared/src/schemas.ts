@@ -24,7 +24,9 @@ export const productImageInputSchema = z.object({
 
 export const productCreateSchema = z.object({
   name: z.string().min(2).max(160),
+  nameSv: z.string().max(160).nullable().optional(),
   description: z.string().max(5000).optional(),
+  descriptionSv: z.string().max(5000).nullable().optional(),
   priceMinor: z.number().int().min(0),
   compareAtMinor: z.number().int().min(0).nullable().optional(),
   sku: z.string().max(64).optional(),

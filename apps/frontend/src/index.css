@@ -23,6 +23,13 @@
     @apply font-serif;
   }
 
+  /* Admin is a functional dashboard — use clean sans everywhere, overriding
+     the storefront's serif headings (higher specificity wins). */
+  .admin-scope :is(h1, h2, h3, .font-serif) {
+    font-family: Inter, system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+
   /* Accessible focus ring for keyboard users. */
   :focus-visible {
     @apply outline-none ring-2 ring-maroon-500 ring-offset-2 ring-offset-ivory;
@@ -39,17 +46,38 @@
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium
-      transition-all duration-200 focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60;
+    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3
+      text-sm font-medium transition-all duration-200 focus-visible:ring-2
+      disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  /* Animated shine sweep on hover for filled buttons. */
+  .btn-primary::after,
+  .btn-gold::after {
+    content: '';
+    @apply pointer-events-none absolute inset-0 -translate-x-full;
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      rgba(255, 255, 255, 0.35) 50%,
+      transparent 80%
+    );
+    transition: transform 0.6s ease;
+  }
+  .btn-primary:hover::after,
+  .btn-gold:hover::after {
+    @apply translate-x-full;
   }
   .btn-primary {
-    @apply btn bg-maroon-600 text-white hover:bg-maroon-700 active:scale-[0.98] shadow-soft;
+    @apply btn bg-maroon-600 text-white shadow-soft hover:-translate-y-0.5 hover:bg-maroon-700
+      hover:shadow-[0_16px_40px_-12px_rgba(124,31,63,0.5)] active:translate-y-0 active:scale-[0.98];
   }
   .btn-ghost {
-    @apply btn border border-maroon-200 bg-white/60 text-maroon-700 hover:bg-white;
+    @apply btn border border-maroon-200 bg-white/60 text-maroon-700 hover:-translate-y-0.5 hover:bg-white
+      hover:shadow-card active:translate-y-0;
   }
   .btn-gold {
-    @apply btn bg-gold-300 text-ink hover:bg-gold-200 active:scale-[0.98];
+    @apply btn bg-gold-300 text-ink hover:-translate-y-0.5 hover:bg-gold-200 hover:shadow-soft
+      active:translate-y-0 active:scale-[0.98];
   }
 
   .card {

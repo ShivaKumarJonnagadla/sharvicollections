@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, Share2, ShoppingBag } from 'lucide-react';
-import { formatSEK } from '@sharvi/shared';
+import { formatSEK, productDescription, productName } from '@sharvi/shared';
 import { useProduct } from '@/hooks/catalog';
 import { ProductGallery } from '@/components/ProductGallery';
 import { ProductCard } from '@/components/ProductCard';
@@ -34,6 +34,8 @@ export function ProductPage() {
 
   const { product, related } = data;
   const url = `${SITE_URL}/product/${product.slug}`;
+  const displayName = productName(product, locale);
+  const displayDescription = productDescription(product, locale);
 
   const onAdd = () => {
     add(product);
@@ -43,13 +45,13 @@ export function ProductPage() {
   };
 
   const shareWhatsApp = () => {
-    const text = `${product.name} — ${formatSEK(product.priceMinor, locale)}\n${url}`;
+    const text = `${displayName} — ${formatSEK(product.priceMinor, locale)}\n${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noreferrer');
   };
 
   const share = async () => {
     if (navigator.share) {
-      await navigator.share({ title: product.name, url }).catch(() => undefined);
+      await navigator.share({ title: displayName, url }).catch(() => undefined);
     } else {
       shareWhatsApp();
     }
@@ -58,8 +60,8 @@ export function ProductPage() {
   return (
     <>
       <Seo
-        title={product.name}
-        description={product.description ?? undefined}
+        title={displayName}
+        description={displayDescription ?? undefined}
         image={product.images[0]?.url}
         path={`/product/${product.slug}`}
         type="product"
@@ -106,7 +108,7 @@ export function ProductPage() {
             <p className="text-sm uppercase tracking-widest text-gold-500">
               {product.category.name}
             </p>
-            <h1 className="mt-2 font-serif text-3xl text-maroon-800 sm:text-4xl">{product.name}</h1>
+            <h1 className="mt-2 font-serif text-3xl text-maroon-800 sm:text-4xl">{displayName}</h1>
 
             <div className="mt-4 flex items-center gap-3">
               <span className="text-2xl font-semibold text-maroon-700">
@@ -128,10 +130,10 @@ export function ProductPage() {
               {product.stock > 0 ? t('product.inStock') : t('product.outOfStock')}
             </p>
 
-            {product.description && (
+            {displayDescription && (
               <div className="mt-6">
                 <h2 className="mb-2 font-serif text-lg text-ink">{t('product.description')}</h2>
-                <p className="leading-relaxed text-ink/70">{product.description}</p>
+                <p className="leading-relaxed text-ink/70">{displayDescription}</p>
               </div>
             )}
 
