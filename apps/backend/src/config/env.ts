@@ -44,6 +44,9 @@ const envSchema = z.object({
   // Email (Resend) + public site URL used in order emails / tracking links.
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default('Sharvi Collections <onboarding@resend.dev>'),
+  // Store owner — always notified of new orders (must be the Resend account
+  // email while using the shared onboarding@resend.dev sender).
+  ORDER_NOTIFY_EMAIL: z.string().optional(),
   SITE_URL: z.string().default('https://sharvicollections.vercel.app'),
 });
 

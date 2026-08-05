@@ -64,12 +64,7 @@ function renderOrderEmail(order: OrderDTO): string {
   </body></html>`;
 }
 
-/** Send the order-confirmation email via Resend. Never throws (fire-and-forget). */
-export async function sendOrderConfirmation(order: OrderDTO): Promise<void> {
-  if (!env.emailConfigured) {
-    console.warn('[email] RESEND_API_KEY not set — skipping order email');
-    return;
-  }
+async function send(to: string, subject: string, html: string): Promise<void> {
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -77,17 +72,45 @@ export async function sendOrderConfirmation(order: OrderDTO): Promise<void> {
         Authorization: `Bearer ${env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: env.EMAIL_FROM,
-        to: [order.customerEmail],
-        subject: `Your Sharvi Collections order ${order.orderNumber}`,
-        html: renderOrderEmail(order),
-      }),
+      body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, html }),
     });
-    if (!res.ok) {
-      console.error('[email] Resend responded', res.status, await res.text());
-    }
+    if (!res.ok) console.error('[email] Resend responded', res.status, await res.text());
   } catch (err) {
-    console.error('[email] failed to send order confirmation', err);
+    console.error('[email] send failed', err);
+  }
+}
+
+/**
+ * Send order emails via Resend. Never throws (fire-and-forget).
+ * - Always notifies the store owner (works with the shared onboarding sender).
+ * - Emails the customer too — but Resend only allows this once a domain is
+ *   verified and EMAIL_FROM uses it (the shared onboarding@resend.dev sender can
+ *   only deliver to the Resend account owner). We skip the customer send while on
+ *   the shared sender to avoid guaranteed 403s.
+ */
+export async function sendOrderConfirmation(order: OrderDTO): Promise<void> {
+  if (!env.emailConfigured) {
+    console.warn('[email] RESEND_API_KEY not set — skipping order email');
+    return;
+  }
+  const html = renderOrderEmail(order);
+  const usingSharedSender = env.EMAIL_FROM.includes('onboarding@resend.dev');
+
+  // Owner notification (always).
+  if (env.ORDER_NOTIFY_EMAIL) {
+    await send(
+      env.ORDER_NOTIFY_EMAIL,
+      `🛍️ New order ${order.orderNumber} — ${order.customerName}`,
+      html,
+    );
+  }
+
+  // Customer confirmation (only once a verified domain sender is configured).
+  if (!usingSharedSender) {
+    await send(
+      order.customerEmail,
+      `Your Sharvi Collections order ${order.orderNumber}`,
+      html,
+    );
   }
 }
