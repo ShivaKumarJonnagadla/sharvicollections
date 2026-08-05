@@ -1,3 +1,4 @@
+import nodemailer from 'nodemailer';
 import { formatSEK, type OrderDTO } from '@sharvi/shared';
 import { env } from '../config/env.js';
 
@@ -64,72 +65,94 @@ function renderOrderEmail(order: OrderDTO): string {
   </body></html>`;
 }
 
-async function send(opts: {
+interface SendOpts {
   to: string[];
   cc?: string[];
   subject: string;
   html: string;
-}): Promise<void> {
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: env.EMAIL_FROM,
-        to: opts.to,
-        ...(opts.cc && opts.cc.length ? { cc: opts.cc } : {}),
-        subject: opts.subject,
-        html: opts.html,
-      }),
-    });
-    if (!res.ok) console.error('[email] Resend responded', res.status, await res.text());
-  } catch (err) {
-    console.error('[email] send failed', err);
-  }
+}
+
+/** Send via the store's Gmail (App Password) — delivers to any recipient. */
+async function sendViaGmail(opts: SendOpts): Promise<void> {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: env.GMAIL_USER, pass: env.GMAIL_APP_PASSWORD },
+  });
+  // Gmail forces the From to the authenticated account; keep a friendly name.
+  await transporter.sendMail({
+    from: `Sharvi Collections <${env.GMAIL_USER}>`,
+    to: opts.to.join(', '),
+    ...(opts.cc && opts.cc.length ? { cc: opts.cc.join(', ') } : {}),
+    subject: opts.subject,
+    html: opts.html,
+  });
+}
+
+/** Fallback: send via Resend (subject to its domain-verification rules). */
+async function sendViaResend(opts: SendOpts): Promise<void> {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: env.EMAIL_FROM,
+      to: opts.to,
+      ...(opts.cc && opts.cc.length ? { cc: opts.cc } : {}),
+      subject: opts.subject,
+      html: opts.html,
+    }),
+  });
+  if (!res.ok) console.error('[email] Resend responded', res.status, await res.text());
 }
 
 /**
- * Send order emails via Resend. Never throws (fire-and-forget).
- *
- * Once a domain is verified in Resend and EMAIL_FROM uses it, the email goes
- * TO the customer with a CC to the store owner (ORDER_NOTIFY_EMAIL) — exactly
- * as intended. While still on the shared onboarding@resend.dev sender, Resend
- * only permits delivery to the Resend account owner, so we fall back to sending
- * the notification to the owner (customer delivery is impossible until a domain
- * is verified — that's a Resend restriction, not a code limitation).
+ * Send the order confirmation. Never throws (fire-and-forget).
+ * - Gmail (preferred): emails the customer, CC the store owner. Works for any
+ *   recipient — no domain needed.
+ * - Resend (fallback): only reaches the account owner on the shared sender, so
+ *   we send the notification to the owner until a domain is verified.
  */
 export async function sendOrderConfirmation(order: OrderDTO): Promise<void> {
-  if (!env.emailConfigured) {
-    console.warn('[email] RESEND_API_KEY not set — skipping order email');
-    return;
-  }
   const html = renderOrderEmail(order);
-  const usingSharedSender = env.EMAIL_FROM.includes('onboarding@resend.dev');
   const owner = env.ORDER_NOTIFY_EMAIL;
   const customerSubject = `Your Sharvi Collections order ${order.orderNumber}`;
 
-  if (usingSharedSender) {
-    // Can only reach the Resend account owner — send the notification there.
-    if (owner) {
-      await send({
-        to: [owner],
-        subject: `🛍️ New order ${order.orderNumber} — ${order.customerName} (${order.customerEmail})`,
+  try {
+    if (env.gmailConfigured) {
+      await sendViaGmail({
+        to: [order.customerEmail],
+        cc: owner ? [owner] : undefined,
+        subject: customerSubject,
         html,
       });
-    } else {
-      console.warn('[email] shared sender + no ORDER_NOTIFY_EMAIL — no email sent');
+      return;
     }
-    return;
-  }
 
-  // Verified domain: email the customer, CC the store owner.
-  await send({
-    to: [order.customerEmail],
-    cc: owner ? [owner] : undefined,
-    subject: customerSubject,
-    html,
-  });
+    if (env.RESEND_API_KEY) {
+      const usingSharedSender = env.EMAIL_FROM.includes('onboarding@resend.dev');
+      if (usingSharedSender) {
+        if (owner) {
+          await sendViaResend({
+            to: [owner],
+            subject: `🛍️ New order ${order.orderNumber} — ${order.customerName} (${order.customerEmail})`,
+            html,
+          });
+        }
+      } else {
+        await sendViaResend({
+          to: [order.customerEmail],
+          cc: owner ? [owner] : undefined,
+          subject: customerSubject,
+          html,
+        });
+      }
+      return;
+    }
+
+    console.warn('[email] no email transport configured — skipping order email');
+  } catch (err) {
+    console.error('[email] failed to send order confirmation', err);
+  }
 }

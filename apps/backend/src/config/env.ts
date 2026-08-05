@@ -42,10 +42,13 @@ const envSchema = z.object({
   CLOUDINARY_UPLOAD_FOLDER: z.string().default('sharvi-collections'),
 
   // Email (Resend) + public site URL used in order emails / tracking links.
+  // Preferred: send via the store's own Gmail (App Password) — no domain needed.
+  GMAIL_USER: z.string().optional(),
+  GMAIL_APP_PASSWORD: z.string().optional(),
+  // Fallback: Resend.
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default('Sharvi Collections <onboarding@resend.dev>'),
-  // Store owner — always notified of new orders (must be the Resend account
-  // email while using the shared onboarding@resend.dev sender).
+  // Store owner — CC'd on customer emails; sole recipient with the Resend shared sender.
   ORDER_NOTIFY_EMAIL: z.string().optional(),
   SITE_URL: z.string().default('https://sharvicollections.vercel.app'),
 });
@@ -70,7 +73,8 @@ export const env = {
   cloudinaryConfigured: Boolean(
     raw.CLOUDINARY_CLOUD_NAME && raw.CLOUDINARY_API_KEY && raw.CLOUDINARY_API_SECRET,
   ),
-  emailConfigured: Boolean(raw.RESEND_API_KEY),
+  gmailConfigured: Boolean(raw.GMAIL_USER && raw.GMAIL_APP_PASSWORD),
+  emailConfigured: Boolean((raw.GMAIL_USER && raw.GMAIL_APP_PASSWORD) || raw.RESEND_API_KEY),
 };
 
 export type Env = typeof env;
