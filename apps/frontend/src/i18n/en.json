@@ -69,7 +69,8 @@
     "allCategories": "All categories",
     "results": "{{count}} products",
     "empty": "No products match your filters.",
-    "clear": "Clear filters"
+    "clear": "Clear filters",
+    "apply": "Apply filter"
   },
   "cart": {
     "title": "Your Cart",

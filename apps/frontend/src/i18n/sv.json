@@ -69,7 +69,8 @@
     "allCategories": "Alla kategorier",
     "results": "{{count}} produkter",
     "empty": "Inga produkter matchar dina filter.",
-    "clear": "Rensa filter"
+    "clear": "Rensa filter",
+    "apply": "Använd filter"
   },
   "cart": {
     "title": "Din varukorg",

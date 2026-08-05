@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
@@ -8,9 +8,11 @@ import { useCategories, useProducts } from '@/hooks/catalog';
 import { ProductCard } from '@/components/ProductCard';
 import { ProductGridSkeleton } from '@/components/Skeletons';
 import { Seo } from '@/components/Seo';
+import { cn } from '@/lib/utils';
 
 export function ShopPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { category: categoryParam } = useParams();
   const [params, setParams] = useSearchParams();
   const { data: categories } = useCategories();
@@ -21,6 +23,16 @@ export function ShopPage() {
   const sort = (params.get('sort') as ProductSort) ?? 'newest';
   const badge = (params.get('badge') as ProductBadge) ?? undefined;
   const page = Number(params.get('page') ?? 1);
+  const minPrice = params.get('minPrice');
+  const maxPrice = params.get('maxPrice');
+
+  // Local (uncommitted) price inputs in kronor, applied via the Apply button.
+  const [minKr, setMinKr] = useState(minPrice ? String(Number(minPrice) / 100) : '');
+  const [maxKr, setMaxKr] = useState(maxPrice ? String(Number(maxPrice) / 100) : '');
+  useEffect(() => {
+    setMinKr(minPrice ? String(Number(minPrice) / 100) : '');
+    setMaxKr(maxPrice ? String(Number(maxPrice) / 100) : '');
+  }, [minPrice, maxPrice]);
 
   const { data, isLoading, isFetching } = useProducts({
     category: category || undefined,
@@ -28,6 +40,8 @@ export function ShopPage() {
     q: q || undefined,
     sort,
     badge,
+    minPrice: minPrice ? Number(minPrice) : undefined,
+    maxPrice: maxPrice ? Number(maxPrice) : undefined,
     page,
     pageSize: 24,
   });
@@ -37,6 +51,7 @@ export function ShopPage() {
     [categories, category],
   );
 
+  /** Update query params, preserving the current category route. */
   const update = (patch: Record<string, string | undefined>) => {
     const next = new URLSearchParams(params);
     Object.entries(patch).forEach(([k, v]) => {
@@ -45,6 +60,24 @@ export function ShopPage() {
     });
     if (!('page' in patch)) next.set('page', '1');
     setParams(next);
+  };
+
+  /** Category is part of the URL path, so switching it navigates. */
+  const selectCategory = (slug: string) => {
+    navigate(slug ? `/shop/${slug}` : '/shop');
+  };
+
+  const applyPrice = () => {
+    update({
+      minPrice: minKr ? String(Math.round(Number(minKr) * 100)) : undefined,
+      maxPrice: maxKr ? String(Math.round(Number(maxKr) * 100)) : undefined,
+    });
+  };
+
+  const clearAll = () => {
+    setMinKr('');
+    setMaxKr('');
+    navigate('/shop');
   };
 
   const title = activeCategory?.name ?? (q ? `“${q}”` : t('shop.title'));
@@ -64,30 +97,28 @@ export function ShopPage() {
           {data ? t('shop.results', { count: data.total }) : ''}
         </p>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[240px_1fr]">
+        <div className="mt-8 grid gap-8 lg:grid-cols-[260px_1fr]">
           {/* Filters */}
           <aside className="space-y-6">
-            <div className="flex items-center gap-2 text-maroon-700">
-              <SlidersHorizontal className="h-4 w-4" />
-              <span className="font-medium">{t('shop.filters')}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-maroon-700">
+                <SlidersHorizontal className="h-4 w-4" />
+                <span className="font-medium">{t('shop.filters')}</span>
+              </div>
+              <button onClick={clearAll} className="text-xs text-maroon-500 hover:underline">
+                {t('shop.clear')}
+              </button>
             </div>
 
+            {/* Category */}
             <div>
               <label className="mb-2 block text-sm font-medium text-ink/70">
                 {t('shop.category')}
               </label>
               <select
                 value={category}
-                onChange={(e) => {
-                  const next = new URLSearchParams(params);
-                  next.delete('subcategory');
-                  if (e.target.value) next.set('category', e.target.value);
-                  else next.delete('category');
-                  next.set('page', '1');
-                  // Category is also a route param; normalise to query form.
-                  setParams(next);
-                }}
-                className="w-full rounded-xl border border-maroon-200 bg-white px-3 py-2 text-sm"
+                onChange={(e) => selectCategory(e.target.value)}
+                className="w-full rounded-xl border border-maroon-200 bg-white px-3 py-2.5 text-sm"
               >
                 <option value="">{t('shop.allCategories')}</option>
                 {categories?.map((c) => (
@@ -98,26 +129,43 @@ export function ShopPage() {
               </select>
             </div>
 
+            {/* Subcategory chips (materialised here instead of a hover menu) */}
             {activeCategory && activeCategory.subcategories.length > 0 && (
               <div>
                 <label className="mb-2 block text-sm font-medium text-ink/70">
                   {t('shop.subcategory')}
                 </label>
-                <select
-                  value={subcategory}
-                  onChange={(e) => update({ subcategory: e.target.value || undefined })}
-                  className="w-full rounded-xl border border-maroon-200 bg-white px-3 py-2 text-sm"
-                >
-                  <option value="">{t('shop.allCategories')}</option>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => update({ subcategory: undefined })}
+                    className={cn(
+                      'rounded-full border px-3 py-1.5 text-xs transition-colors',
+                      !subcategory
+                        ? 'border-maroon-600 bg-maroon-600 text-white'
+                        : 'border-maroon-200 bg-white text-ink/70 hover:border-maroon-300',
+                    )}
+                  >
+                    {t('nav.viewAll')}
+                  </button>
                   {activeCategory.subcategories.map((s) => (
-                    <option key={s.id} value={s.slug}>
+                    <button
+                      key={s.id}
+                      onClick={() => update({ subcategory: s.slug })}
+                      className={cn(
+                        'rounded-full border px-3 py-1.5 text-xs transition-colors',
+                        subcategory === s.slug
+                          ? 'border-maroon-600 bg-maroon-600 text-white'
+                          : 'border-maroon-200 bg-white text-ink/70 hover:border-maroon-300',
+                      )}
+                    >
                       {s.name}
-                    </option>
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
             )}
 
+            {/* Price range */}
             <div>
               <label className="mb-2 block text-sm font-medium text-ink/70">
                 {t('shop.priceRange')} (kr)
@@ -126,33 +174,29 @@ export function ShopPage() {
                 <input
                   type="number"
                   min={0}
+                  inputMode="numeric"
                   placeholder="0"
-                  defaultValue={params.get('minPrice') ? Number(params.get('minPrice')) / 100 : ''}
-                  onBlur={(e) =>
-                    update({ minPrice: e.target.value ? String(Number(e.target.value) * 100) : undefined })
-                  }
+                  value={minKr}
+                  onChange={(e) => setMinKr(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && applyPrice()}
                   className="w-full rounded-xl border border-maroon-200 bg-white px-3 py-2 text-sm"
                 />
                 <span className="text-ink/40">–</span>
                 <input
                   type="number"
                   min={0}
+                  inputMode="numeric"
                   placeholder="999"
-                  defaultValue={params.get('maxPrice') ? Number(params.get('maxPrice')) / 100 : ''}
-                  onBlur={(e) =>
-                    update({ maxPrice: e.target.value ? String(Number(e.target.value) * 100) : undefined })
-                  }
+                  value={maxKr}
+                  onChange={(e) => setMaxKr(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && applyPrice()}
                   className="w-full rounded-xl border border-maroon-200 bg-white px-3 py-2 text-sm"
                 />
               </div>
+              <button onClick={applyPrice} className="btn-primary mt-3 w-full py-2 text-xs">
+                {t('shop.apply')}
+              </button>
             </div>
-
-            <button
-              onClick={() => setParams(new URLSearchParams())}
-              className="text-sm text-maroon-500 hover:underline"
-            >
-              {t('shop.clear')}
-            </button>
           </aside>
 
           {/* Results */}
@@ -185,6 +229,11 @@ export function ShopPage() {
             ) : (
               <div className="rounded-2xl bg-white p-12 text-center text-ink/60">
                 {t('shop.empty')}
+                <div>
+                  <button onClick={clearAll} className="btn-ghost mt-4">
+                    {t('shop.clear')}
+                  </button>
+                </div>
               </div>
             )}
 
