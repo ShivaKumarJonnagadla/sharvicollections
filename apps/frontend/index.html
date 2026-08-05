@@ -18,6 +18,19 @@
       rel="stylesheet"
     />
     <title>Sharvi Collections — Multicultural Jewellery</title>
+    <!-- Capture the install prompt as early as possible; it can fire before React mounts. -->
+    <script>
+      window.__pwaPrompt = null;
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__pwaPrompt = e;
+        window.dispatchEvent(new Event('pwa-available'));
+      });
+      window.addEventListener('appinstalled', function () {
+        window.__pwaPrompt = null;
+        window.dispatchEvent(new Event('pwa-available'));
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

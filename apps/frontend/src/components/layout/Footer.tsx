@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MapPin, Phone } from 'lucide-react';
 import { CONTACT_PHONE, WHATSAPP_NUMBER } from '@/lib/utils';
+import { FooterInstallButton } from '@/components/PwaInstall';
 
 export function Footer() {
   const { t } = useTranslation();
@@ -70,6 +71,9 @@ export function Footer() {
             {t('footer.about')}
           </h3>
           <p className="text-sm text-ink/70">{t('footer.madeIn')} 🇸🇪</p>
+          <div className="mt-3">
+            <FooterInstallButton />
+          </div>
         </div>
       </div>
 
