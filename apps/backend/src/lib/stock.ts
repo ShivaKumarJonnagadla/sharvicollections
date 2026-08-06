@@ -13,10 +13,16 @@ function getColors(product: StockProduct): ColorOption[] {
   return Array.isArray(product.colors) ? (product.colors as unknown as ColorOption[]) : [];
 }
 
-/** Available units for a product (per-colour when colours exist). */
-export function availableStock(product: StockProduct, colorEn?: string | null): number {
+/** Per-colour stock is used only when every colour has a numeric stock. */
+function usesColorStock(product: StockProduct): boolean {
   const colors = getColors(product);
-  if (colors.length === 0) return product.stock;
+  return colors.length > 0 && colors.every((c) => typeof c.stock === 'number');
+}
+
+/** Available units for a product (per-colour when tracked that way). */
+export function availableStock(product: StockProduct, colorEn?: string | null): number {
+  if (!usesColorStock(product)) return product.stock;
+  const colors = getColors(product);
   if (!colorEn) return colors.reduce((s, c) => s + (c.stock || 0), 0);
   const c = colors.find((x) => x.en.toLowerCase() === colorEn.toLowerCase());
   return c ? c.stock || 0 : 0;
@@ -29,7 +35,7 @@ export function assertStock(product: StockProduct, colorEn: string | null | unde
     throw AppError.badRequest(`Please select a colour for "${product.name}"`);
   }
   const avail = availableStock(product, colorEn);
-  const suffix = colorEn ? ` (${colorEn})` : '';
+  const suffix = usesColorStock(product) && colorEn ? ` (${colorEn})` : '';
   if (avail < qty) {
     throw AppError.conflict(
       avail <= 0
@@ -50,7 +56,7 @@ export async function adjustStock(
   delta: number,
 ): Promise<void> {
   const colors = getColors(product);
-  if (colors.length > 0 && colorEn) {
+  if (usesColorStock(product) && colorEn) {
     const idx = colors.findIndex((c) => c.en.toLowerCase() === colorEn.toLowerCase());
     if (idx >= 0) {
       colors[idx].stock = Math.max(0, (colors[idx].stock || 0) + delta);

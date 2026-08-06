@@ -80,7 +80,7 @@ export function AdminProductEdit() {
       name: p.name,
       nameSv: p.nameSv ?? '',
       articleId: p.articleId ?? '',
-      colors: p.colors ?? [],
+      colors: (p.colors ?? []).map((c) => ({ en: c.en, sv: c.sv, stock: c.stock ?? 0 })),
       description: p.description ?? '',
       descriptionSv: p.descriptionSv ?? '',
       priceKr: String(p.priceMinor / 100),

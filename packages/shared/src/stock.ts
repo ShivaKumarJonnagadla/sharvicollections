@@ -3,24 +3,29 @@ import type { ProductDTO } from './types.js';
 
 type StockProduct = Pick<ProductDTO, 'stock' | 'colors'>;
 
-/** True when a product's inventory is tracked per colour. */
-export function hasColorStock(product: StockProduct): boolean {
-  return Array.isArray(product.colors) && product.colors.length > 0;
+/**
+ * A product tracks stock per colour only when it has colours AND every colour
+ * carries a numeric stock. Otherwise colours are labels only and the single
+ * `product.stock` applies (keeps older colour data working).
+ */
+export function usesColorStock(product: StockProduct): boolean {
+  return (
+    Array.isArray(product.colors) &&
+    product.colors.length > 0 &&
+    product.colors.every((c) => typeof c.stock === 'number')
+  );
 }
 
 /** Stock for a specific colour (by English name). */
 export function colorStock(product: StockProduct, colorEn?: string | null): number {
-  if (!colorEn) return 0;
+  if (!colorEn || !usesColorStock(product)) return product.stock;
   const c = product.colors.find((x) => x.en.toLowerCase() === colorEn.toLowerCase());
-  return c ? c.stock : 0;
+  return c && typeof c.stock === 'number' ? c.stock : 0;
 }
 
-/**
- * Total available units: sum of colour stocks when colours exist, otherwise the
- * product's single stock value.
- */
+/** Total available units across colours, or the single stock value. */
 export function totalStock(product: StockProduct): number {
-  if (hasColorStock(product)) {
+  if (usesColorStock(product)) {
     return product.colors.reduce((sum, c) => sum + (c.stock || 0), 0);
   }
   return product.stock;
@@ -28,8 +33,6 @@ export function totalStock(product: StockProduct): number {
 
 /** Effective stock for the currently selected colour (or total when none). */
 export function effectiveStock(product: StockProduct, color?: ColorOption | null): number {
-  if (hasColorStock(product)) {
-    return color ? colorStock(product, color.en) : totalStock(product);
-  }
-  return product.stock;
+  if (!usesColorStock(product)) return product.stock;
+  return color ? colorStock(product, color.en) : totalStock(product);
 }
