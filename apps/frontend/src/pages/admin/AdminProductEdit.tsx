@@ -21,7 +21,7 @@ interface FormState {
   name: string;
   nameSv: string;
   articleId: string;
-  colors: { en: string; sv: string }[];
+  colors: { en: string; sv: string; stock: number }[];
   description: string;
   descriptionSv: string;
   priceKr: string;
@@ -156,7 +156,7 @@ export function AdminProductEdit() {
       articleId: form.articleId.trim() || null,
       colors: form.colors
         .filter((c) => c.en.trim())
-        .map((c) => ({ en: c.en.trim(), sv: c.sv.trim() })),
+        .map((c) => ({ en: c.en.trim(), sv: c.sv.trim(), stock: Number(c.stock) || 0 })),
       description: form.description || undefined,
       descriptionSv: form.descriptionSv || null,
       priceMinor: Math.round(Number(form.priceKr) * 100),
@@ -314,6 +314,22 @@ export function AdminProductEdit() {
                   placeholder="Svenska (t.ex. Guld)"
                   className={inputCls}
                 />
+                <input
+                  type="number"
+                  min={0}
+                  value={c.stock}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      colors: form.colors.map((x, j) =>
+                        j === i ? { ...x, stock: Number(e.target.value) } : x,
+                      ),
+                    })
+                  }
+                  placeholder="Stock"
+                  title="Stock for this colour"
+                  className={`${inputCls} w-24`}
+                />
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, colors: form.colors.filter((_, j) => j !== i) })}
@@ -327,13 +343,13 @@ export function AdminProductEdit() {
           </div>
           <button
             type="button"
-            onClick={() => setForm({ ...form, colors: [...form.colors, { en: '', sv: '' }] })}
+            onClick={() => setForm({ ...form, colors: [...form.colors, { en: '', sv: '', stock: 0 }] })}
             className="btn-ghost mt-2 py-1.5 text-xs"
           >
             + Add colour
           </button>
           <p className="mt-1 text-xs text-ink/50">
-            Customers choose one of these on the product page; it shows on the order &amp; email.
+            Each colour has its own stock. With colours, the single Stock field below is ignored.
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">

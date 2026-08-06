@@ -4,8 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { Check, Share2, ShoppingBag } from 'lucide-react';
 import {
   colorLabel,
+  colorStock,
   discountPercent,
+  effectiveStock,
   formatSEK,
+  totalStock,
   LOW_STOCK_THRESHOLD,
   productDescription,
   productName,
@@ -46,9 +49,11 @@ export function ProductPage() {
   const displayName = productName(product, locale);
   const displayDescription = productDescription(product, locale);
   const activeColor = selectedColor ?? product.colors[0] ?? null;
-  const lowLeft = product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
+  const effStock = effectiveStock(product, activeColor);
+  const lowLeft = effStock > 0 && effStock <= LOW_STOCK_THRESHOLD;
 
   const onAdd = () => {
+    if (effStock <= 0) return;
     add(product, 1, activeColor);
     setAdded(true);
     openCart();
@@ -88,7 +93,7 @@ export function ProductPage() {
             priceCurrency: 'SEK',
             price: (product.priceMinor / 100).toFixed(2),
             availability:
-              product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+              totalStock(product) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
             url,
           },
         }}
@@ -146,18 +151,18 @@ export function ProductPage() {
 
             <p
               className={`mt-3 inline-flex items-center gap-1.5 text-sm ${
-                product.stock <= 0
+                effStock <= 0
                   ? 'text-maroon-400'
-                  : product.stock <= LOW_STOCK_THRESHOLD
+                  : effStock <= LOW_STOCK_THRESHOLD
                     ? 'text-amber-600'
                     : 'text-emerald-600'
               }`}
             >
               <span className="h-2 w-2 rounded-full bg-current" />
-              {product.stock <= 0
+              {effStock <= 0
                 ? t('product.outOfStock')
-                : product.stock <= LOW_STOCK_THRESHOLD
-                  ? t('product.onlyLeft', { count: product.stock })
+                : effStock <= LOW_STOCK_THRESHOLD
+                  ? t('product.onlyLeft', { count: effStock })
                   : t('product.inStock')}
             </p>
 
@@ -165,12 +170,12 @@ export function ProductPage() {
             {lowLeft && (
               <div className="mt-4">
                 <p className="text-sm font-medium text-red-600">
-                  {t('product.hurry', { count: product.stock })}
+                  {t('product.hurry', { count: effStock })}
                 </p>
                 <div className="mt-1.5 h-1.5 w-56 max-w-full overflow-hidden rounded-full bg-maroon-50">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-red-500 to-emerald-400"
-                    style={{ width: `${Math.min(100, (product.stock / LOW_STOCK_THRESHOLD) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (effStock / LOW_STOCK_THRESHOLD) * 100)}%` }}
                   />
                 </div>
               </div>
@@ -192,16 +197,21 @@ export function ProductPage() {
                 <div className="flex flex-wrap gap-2">
                   {product.colors.map((c) => {
                     const isActive = activeColor?.en === c.en;
+                    const out = colorStock(product, c.en) <= 0;
                     return (
                       <button
                         key={c.en}
                         type="button"
+                        disabled={out}
                         onClick={() => setSelectedColor(c)}
                         aria-pressed={isActive}
+                        title={out ? t('product.outOfStock') : undefined}
                         className={`rounded-lg border px-4 py-2 text-sm transition ${
-                          isActive
-                            ? 'border-maroon-600 bg-maroon-50 font-medium text-maroon-700'
-                            : 'border-maroon-200 text-ink/70 hover:border-maroon-400'
+                          out
+                            ? 'cursor-not-allowed border-maroon-100 text-ink/30 line-through'
+                            : isActive
+                              ? 'border-maroon-600 bg-maroon-50 font-medium text-maroon-700'
+                              : 'border-maroon-200 text-ink/70 hover:border-maroon-400'
                         }`}
                       >
                         {colorLabel(c, locale)}
@@ -213,7 +223,7 @@ export function ProductPage() {
             )}
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <button onClick={onAdd} disabled={product.stock === 0} className="btn-primary flex-1 sm:flex-none">
+              <button onClick={onAdd} disabled={effStock <= 0} className="btn-primary flex-1 sm:flex-none">
                 {added ? <Check className="h-4 w-4" /> : <ShoppingBag className="h-4 w-4" />}
                 {added ? t('product.added') : t('product.addToCart')}
               </button>
@@ -239,7 +249,7 @@ export function ProductPage() {
               <div>
                 <dt className="text-ink/50">{t('product.availability')}</dt>
                 <dd className="text-ink">
-                  {product.stock > 0 ? t('product.inStock') : t('product.outOfStock')}
+                  {totalStock(product) > 0 ? t('product.inStock') : t('product.outOfStock')}
                 </dd>
               </div>
               <div>

@@ -4,6 +4,7 @@ import { ORDER_STATUSES, PAYMENT_METHODS, PRODUCT_BADGES, PRODUCT_SORTS } from '
 export const colorOptionSchema = z.object({
   en: z.string().min(1).max(40),
   sv: z.string().max(40).default(''),
+  stock: z.coerce.number().int().min(0).default(0),
 });
 
 /**

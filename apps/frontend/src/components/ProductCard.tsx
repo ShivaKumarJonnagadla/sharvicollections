@@ -8,6 +8,7 @@ import {
   formatSEK,
   LOW_STOCK_THRESHOLD,
   productName,
+  totalStock,
   type ProductDTO,
 } from '@sharvi/shared';
 import { cloudinaryUrl, cn } from '@/lib/utils';
@@ -30,8 +31,9 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
   const images = product.images.length ? product.images : [];
   const locale = i18n.language.startsWith('sv') ? 'sv' : 'en';
   const displayName = productName(product, locale);
-  const soldOut = product.stock <= 0;
-  const lowStock = !soldOut && product.stock <= LOW_STOCK_THRESHOLD;
+  const stock = totalStock(product);
+  const soldOut = stock <= 0;
+  const lowStock = !soldOut && stock <= LOW_STOCK_THRESHOLD;
   const discount = discountPercent(product.priceMinor, product.compareAtMinor);
 
   const go = (dir: 1 | -1) => (e: React.MouseEvent) => {
@@ -43,7 +45,8 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
   const quickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     if (soldOut) return;
-    add(product, 1, product.colors[0] ?? null);
+    const firstAvailable = product.colors.find((c) => c.stock > 0) ?? product.colors[0] ?? null;
+    add(product, 1, firstAvailable);
     openCart();
   };
 
@@ -90,7 +93,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
             )}
             {lowStock && (
               <span className="rounded-full bg-amber-500 px-3 py-1 text-[11px] font-semibold text-white shadow-sm">
-                {t('product.onlyLeft', { count: product.stock })}
+                {t('product.onlyLeft', { count: stock })}
               </span>
             )}
           </div>

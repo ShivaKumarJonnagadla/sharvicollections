@@ -14,6 +14,7 @@ import { AppError, asyncHandler, created, ok } from '../lib/http.js';
 import { serializeOrder } from '../lib/serialize.js';
 import { audit } from '../lib/audit.js';
 import { sendOrderCancellation, sendOrderConfirmation } from '../lib/email.js';
+import { adjustStock, assertStock } from '../lib/stock.js';
 import { getStoreSettings } from '../lib/settings.js';
 import { validate, validated } from '../middleware/validate.js';
 import { orderLimiter } from '../middleware/rateLimit.js';
@@ -79,14 +80,8 @@ router.post(
       const lineItems = input.items.map((item) => {
         const product = byId.get(item.productId);
         if (!product) throw AppError.badRequest(`Product unavailable: ${item.productId}`);
-        // Prevent overselling — block if not enough stock.
-        if (product.stock < item.quantity) {
-          throw AppError.conflict(
-            product.stock <= 0
-              ? `"${product.name}" is out of stock`
-              : `Only ${product.stock} left of "${product.name}"`,
-          );
-        }
+        // Prevent overselling — per-colour when the product has colour options.
+        assertStock(product, item.color, item.quantity);
         const unit = product.priceMinor;
         return {
           productId: product.id,
@@ -128,12 +123,10 @@ router.post(
         include: { items: true },
       });
 
-      // Decrement stock for each ordered product (within the same transaction).
+      // Decrement stock (per colour when applicable) within the same transaction.
       for (const item of input.items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        });
+        const product = byId.get(item.productId)!;
+        await adjustStock(tx, product, item.color ?? null, -item.quantity);
       }
 
       return createdOrder;
@@ -213,14 +206,14 @@ router.post(
         data: { status: 'CANCELLED', cancelReason: reason, cancelledAt: new Date() },
         include: { items: true },
       });
-      // Return stock to inventory (order was never fulfilled).
+      // Return stock to inventory (per colour when applicable).
+      const productIds = existing.items.map((i) => i.productId).filter(Boolean) as string[];
+      const products = await tx.product.findMany({ where: { id: { in: productIds } } });
+      const byId = new Map(products.map((p) => [p.id, p]));
       for (const item of existing.items) {
-        if (item.productId) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { increment: item.quantity } },
-          });
-        }
+        if (!item.productId) continue;
+        const product = byId.get(item.productId);
+        if (product) await adjustStock(tx, product, item.color, item.quantity);
       }
       return updated;
     });
@@ -265,6 +258,7 @@ router.post(
       const lineItems = input.items.map((item) => {
         const product = byId.get(item.productId);
         if (!product) throw AppError.badRequest(`Unknown product: ${item.productId}`);
+        assertStock(product, item.color, item.quantity);
         return {
           productId: product.id,
           productName: product.name,
@@ -296,12 +290,9 @@ router.post(
         include: { items: true },
       });
 
-      // Decrement stock for manual orders too.
+      // Decrement stock (per colour when applicable) for manual orders too.
       for (const item of input.items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        });
+        await adjustStock(tx, byId.get(item.productId)!, item.color ?? null, -item.quantity);
       }
       return created;
     });
