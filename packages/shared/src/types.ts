@@ -1,4 +1,6 @@
 import type {
+  ColorOption,
+  OrderSource,
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
@@ -56,6 +58,7 @@ export interface ProductDTO {
   isPublished: boolean;
   isFeatured: boolean;
   viewCount: number;
+  colors: ColorOption[];
   category: { id: string; name: string; slug: string };
   subcategory: { id: string; name: string; slug: string } | null;
   images: ProductImageDTO[];
@@ -78,6 +81,7 @@ export interface CartLine {
   image: string | null;
   unitPriceMinor: number;
   quantity: number;
+  color?: ColorOption | null;
 }
 
 export interface OrderItemDTO {
@@ -85,6 +89,7 @@ export interface OrderItemDTO {
   productId: string | null;
   productName: string;
   productImage: string | null;
+  color: string | null;
   unitPriceMinor: number;
   quantity: number;
   lineTotalMinor: number;
@@ -98,6 +103,7 @@ export interface OrderDTO {
   customerPhone: string;
   note: string | null;
   status: OrderStatus;
+  source: OrderSource;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   paymentRef: string | null;

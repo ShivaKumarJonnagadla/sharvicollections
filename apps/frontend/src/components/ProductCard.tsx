@@ -43,7 +43,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
   const quickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     if (soldOut) return;
-    add(product);
+    add(product, 1, product.colors[0] ?? null);
     openCart();
   };
 

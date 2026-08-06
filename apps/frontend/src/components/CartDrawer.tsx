@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react';
-import { formatSEK } from '@sharvi/shared';
-import { useCart } from '@/stores/cart';
+import { colorLabel, formatSEK } from '@sharvi/shared';
+import { useCart, lineKey } from '@/stores/cart';
 import { useUi } from '@/stores/ui';
 import { cloudinaryUrl } from '@/lib/utils';
 
@@ -51,8 +51,10 @@ export function CartDrawer() {
             ) : (
               <>
                 <ul className="flex-1 space-y-4 overflow-y-auto p-5">
-                  {items.map((item) => (
-                    <li key={item.productId} className="flex gap-3">
+                  {items.map((item) => {
+                    const key = lineKey(item.productId, item.color);
+                    return (
+                    <li key={key} className="flex gap-3">
                       <Link
                         to={`/product/${item.slug}`}
                         onClick={close}
@@ -74,6 +76,9 @@ export function CartDrawer() {
                         >
                           {item.name}
                         </Link>
+                        {item.color && (
+                          <span className="text-xs text-ink/50">{colorLabel(item.color, locale)}</span>
+                        )}
                         <span className="text-sm text-maroon-700">
                           {formatSEK(item.unitPriceMinor, locale)}
                         </span>
@@ -82,7 +87,7 @@ export function CartDrawer() {
                             <button
                               aria-label="Decrease quantity"
                               className="grid h-8 w-8 place-items-center"
-                              onClick={() => setQuantity(item.productId, item.quantity - 1)}
+                              onClick={() => setQuantity(key, item.quantity - 1)}
                             >
                               <Minus className="h-3.5 w-3.5" />
                             </button>
@@ -90,14 +95,14 @@ export function CartDrawer() {
                             <button
                               aria-label="Increase quantity"
                               className="grid h-8 w-8 place-items-center"
-                              onClick={() => setQuantity(item.productId, item.quantity + 1)}
+                              onClick={() => setQuantity(key, item.quantity + 1)}
                             >
                               <Plus className="h-3.5 w-3.5" />
                             </button>
                           </div>
                           <button
                             aria-label={t('cart.remove')}
-                            onClick={() => remove(item.productId)}
+                            onClick={() => remove(key)}
                             className="text-maroon-400 hover:text-maroon-600"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -105,7 +110,8 @@ export function CartDrawer() {
                         </div>
                       </div>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
 
                 <div className="border-t border-maroon-100 p-5">

@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import type { Prisma } from '@prisma/client';
 import {
+  adminOrderCreateSchema,
   cancelOrderSchema,
   checkoutSchema,
   isCancellable,
+  type AdminOrderCreateInput,
   type CancelOrderInput,
   type CheckoutInput,
 } from '@sharvi/shared';
@@ -90,6 +92,7 @@ router.post(
           productId: product.id,
           productName: product.name,
           productImage: product.images[0]?.url ?? null,
+          color: item.color ?? null,
           unitPriceMinor: unit,
           quantity: item.quantity,
           lineTotalMinor: unit * item.quantity,
@@ -236,6 +239,84 @@ router.post(
 );
 
 // ---------------------------- Admin ---------------------------------------
+
+/**
+ * @openapi
+ * /orders/admin:
+ *   post:
+ *     tags: [Orders]
+ *     summary: (Admin) Manually create an order (e.g. taken over WhatsApp)
+ */
+router.post(
+  '/admin',
+  requireAuth,
+  requireRole('ADMIN'),
+  validate(adminOrderCreateSchema),
+  asyncHandler(async (req: AuthedRequest, res) => {
+    const input = validated<AdminOrderCreateInput>(req);
+
+    const order = await prisma.$transaction(async (tx) => {
+      const products = await tx.product.findMany({
+        where: { id: { in: input.items.map((i) => i.productId) } },
+        include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+      });
+      const byId = new Map(products.map((p) => [p.id, p]));
+
+      const lineItems = input.items.map((item) => {
+        const product = byId.get(item.productId);
+        if (!product) throw AppError.badRequest(`Unknown product: ${item.productId}`);
+        return {
+          productId: product.id,
+          productName: product.name,
+          productImage: product.images[0]?.url ?? null,
+          color: item.color ?? null,
+          unitPriceMinor: product.priceMinor,
+          quantity: item.quantity,
+          lineTotalMinor: product.priceMinor * item.quantity,
+        };
+      });
+      const subtotal = lineItems.reduce((s, l) => s + l.lineTotalMinor, 0);
+      const orderNumber = await nextOrderNumber(tx);
+
+      const created = await tx.order.create({
+        data: {
+          orderNumber,
+          customerName: input.customerName,
+          customerEmail: input.customerEmail || 'n/a@sharvicollections.se',
+          customerPhone: input.customerPhone,
+          note: input.note,
+          status: input.status,
+          source: input.source,
+          paymentMethod: input.paymentMethod,
+          paymentStatus: input.paymentMethod === 'SWISH' ? 'PENDING' : 'UNPAID',
+          subtotalMinor: subtotal,
+          totalMinor: subtotal,
+          items: { create: lineItems },
+        },
+        include: { items: true },
+      });
+
+      // Decrement stock for manual orders too.
+      for (const item of input.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+        });
+      }
+      return created;
+    });
+
+    await audit(req, {
+      action: 'order.create_manual',
+      userId: req.user!.sub,
+      entity: 'Order',
+      entityId: order.id,
+      metadata: { orderNumber: order.orderNumber, source: order.source },
+    });
+
+    return created(res, serializeOrder(order));
+  }),
+);
 
 /**
  * @openapi

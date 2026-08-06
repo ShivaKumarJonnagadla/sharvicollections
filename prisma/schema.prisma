@@ -35,6 +35,12 @@ enum PaymentMethod {
   SWISH
 }
 
+enum OrderSource {
+  WEB
+  WHATSAPP
+  MANUAL
+}
+
 enum PaymentStatus {
   UNPAID
   PENDING
@@ -148,6 +154,7 @@ model Product {
   stock         Int          @default(0)
   isPublished   Boolean      @default(true) // hidden products never appear on storefront
   isFeatured    Boolean      @default(false)
+  colors        Json?        // orderable colour options: [{ en, sv }]
   badge         ProductBadge @default(NONE)
   viewCount     Int          @default(0)
   categoryId    String
@@ -198,6 +205,7 @@ model Order {
   customerPhone   String
   note            String?
   status          OrderStatus   @default(PENDING)
+  source          OrderSource   @default(WEB)
   paymentMethod   PaymentMethod
   paymentStatus   PaymentStatus @default(UNPAID)
   paymentRef      String?       // Swish payment reference
@@ -236,6 +244,7 @@ model OrderItem {
   productId     String?
   productName   String
   productImage  String?
+  color         String? // selected colour option (English canonical)
   unitPriceMinor Int
   quantity      Int
   lineTotalMinor Int

@@ -3,11 +3,13 @@ import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, Share2, ShoppingBag } from 'lucide-react';
 import {
+  colorLabel,
   discountPercent,
   formatSEK,
   LOW_STOCK_THRESHOLD,
   productDescription,
   productName,
+  type ColorOption,
 } from '@sharvi/shared';
 import { useProduct } from '@/hooks/catalog';
 import { ProductGallery } from '@/components/ProductGallery';
@@ -25,6 +27,7 @@ export function ProductPage() {
   const add = useCart((s) => s.add);
   const openCart = useUi((s) => s.openCart);
   const [added, setAdded] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<ColorOption | null>(null);
   const locale = i18n.language.startsWith('sv') ? 'sv' : 'en';
 
   if (isLoading) return <PageLoader />;
@@ -42,9 +45,11 @@ export function ProductPage() {
   const url = `${SITE_URL}/product/${product.slug}`;
   const displayName = productName(product, locale);
   const displayDescription = productDescription(product, locale);
+  const activeColor = selectedColor ?? product.colors[0] ?? null;
+  const lowLeft = product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
 
   const onAdd = () => {
-    add(product);
+    add(product, 1, activeColor);
     setAdded(true);
     openCart();
     setTimeout(() => setAdded(false), 1500);
@@ -156,10 +161,54 @@ export function ProductPage() {
                   : t('product.inStock')}
             </p>
 
+            {/* Urgency bar (low stock) */}
+            {lowLeft && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-red-600">
+                  {t('product.hurry', { count: product.stock })}
+                </p>
+                <div className="mt-1.5 h-1.5 w-56 max-w-full overflow-hidden rounded-full bg-maroon-50">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-red-500 to-emerald-400"
+                    style={{ width: `${Math.min(100, (product.stock / LOW_STOCK_THRESHOLD) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
             {displayDescription && (
               <div className="mt-6">
                 <h2 className="mb-2 font-serif text-lg text-ink">{t('product.description')}</h2>
                 <p className="leading-relaxed text-ink/70">{displayDescription}</p>
+              </div>
+            )}
+
+            {/* Colour options */}
+            {product.colors.length > 0 && (
+              <div className="mt-6">
+                <p className="mb-2 text-sm text-ink/70">
+                  {t('product.colour')}: <strong className="text-ink">{activeColor ? colorLabel(activeColor, locale) : ''}</strong>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map((c) => {
+                    const isActive = activeColor?.en === c.en;
+                    return (
+                      <button
+                        key={c.en}
+                        type="button"
+                        onClick={() => setSelectedColor(c)}
+                        aria-pressed={isActive}
+                        className={`rounded-lg border px-4 py-2 text-sm transition ${
+                          isActive
+                            ? 'border-maroon-600 bg-maroon-50 font-medium text-maroon-700'
+                            : 'border-maroon-200 text-ink/70 hover:border-maroon-400'
+                        }`}
+                      >
+                        {colorLabel(c, locale)}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

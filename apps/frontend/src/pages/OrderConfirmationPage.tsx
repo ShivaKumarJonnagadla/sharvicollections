@@ -127,7 +127,8 @@ export function OrderConfirmationPage() {
           {data.items.map((it) => (
             <li key={it.id} className="flex justify-between text-ink/70">
               <span>
-                {it.productName} × {it.quantity}
+                {it.productName}
+                {it.color ? ` · ${it.color}` : ''} × {it.quantity}
               </span>
               <span>{formatSEK(it.lineTotalMinor, locale)}</span>
             </li>

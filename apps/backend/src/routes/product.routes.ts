@@ -242,6 +242,7 @@ router.post(
         isPublished: input.isPublished,
         isFeatured: input.isFeatured,
         badge: input.badge,
+        colors: input.colors ?? [],
         categoryId: input.categoryId,
         subcategoryId: input.subcategoryId ?? null,
         images: {
@@ -291,6 +292,7 @@ router.patch(
       isPublished: input.isPublished,
       isFeatured: input.isFeatured,
       badge: input.badge,
+      ...(input.colors !== undefined ? { colors: input.colors } : {}),
       ...(input.name ? { slug: await uniqueSlug(input.name, existing.id) } : {}),
       ...(input.categoryId ? { category: { connect: { id: input.categoryId } } } : {}),
       ...(input.subcategoryId !== undefined

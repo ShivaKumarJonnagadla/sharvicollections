@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client';
-import type { CategoryDTO, OrderDTO, ProductDTO } from '@sharvi/shared';
+import type { CategoryDTO, ColorOption, OrderDTO, ProductDTO } from '@sharvi/shared';
 
 type ProductWithRelations = Prisma.ProductGetPayload<{
   include: { category: true; subcategory: true; images: true };
@@ -22,6 +22,7 @@ export function serializeProduct(p: ProductWithRelations): ProductDTO {
     isPublished: p.isPublished,
     isFeatured: p.isFeatured,
     viewCount: p.viewCount,
+    colors: Array.isArray(p.colors) ? (p.colors as unknown as ColorOption[]) : [],
     category: { id: p.category.id, name: p.category.name, slug: p.category.slug },
     subcategory: p.subcategory
       ? { id: p.subcategory.id, name: p.subcategory.name, slug: p.subcategory.slug }
@@ -68,6 +69,7 @@ export function serializeOrder(o: OrderWithItems): OrderDTO {
     customerPhone: o.customerPhone,
     note: o.note,
     status: o.status,
+    source: o.source,
     paymentMethod: o.paymentMethod,
     paymentStatus: o.paymentStatus,
     paymentRef: o.paymentRef,
@@ -88,6 +90,7 @@ export function serializeOrder(o: OrderWithItems): OrderDTO {
       productId: it.productId,
       productName: it.productName,
       productImage: it.productImage,
+      color: it.color,
       unitPriceMinor: it.unitPriceMinor,
       quantity: it.quantity,
       lineTotalMinor: it.lineTotalMinor,

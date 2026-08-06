@@ -29,6 +29,18 @@ export function isCancellable(status: string): boolean {
 export const PAYMENT_STATUSES = ['UNPAID', 'PENDING', 'PAID', 'FAILED', 'REFUNDED'] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
+export const ORDER_SOURCES = ['WEB', 'WHATSAPP', 'MANUAL'] as const;
+export type OrderSource = (typeof ORDER_SOURCES)[number];
+
+/** A colour option a customer can select for a product. */
+export interface ColorOption {
+  en: string;
+  sv: string;
+}
+export function colorLabel(option: ColorOption, locale: Locale): string {
+  return locale === 'sv' && option.sv ? option.sv : option.en;
+}
+
 export const PRODUCT_BADGES = ['NONE', 'NEW', 'TRENDING', 'SALE'] as const;
 export type ProductBadge = (typeof PRODUCT_BADGES)[number];
 

@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash2 } from 'lucide-react';
+import { MessageCircle, Plus, Trash2 } from 'lucide-react';
 import { ORDER_STATUSES, PAYMENT_STATUSES, formatSEK, type OrderDTO, type Paginated } from '@sharvi/shared';
 import { api } from '@/lib/api';
 import { PageLoader } from '@/components/PageLoader';
+import { AdminOrderCreateModal } from './AdminOrderCreateModal';
 
 export function AdminOrders() {
   const qc = useQueryClient();
+  const [showCreate, setShowCreate] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'orders'],
     queryFn: () => api.get<Paginated<OrderDTO>>('/orders/admin/list?pageSize=50'),
@@ -29,7 +32,14 @@ export function AdminOrders() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-serif text-3xl text-maroon-700">Orders</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-serif text-3xl text-maroon-700">Orders</h1>
+        <button onClick={() => setShowCreate(true)} className="btn-primary">
+          <Plus className="h-4 w-4" /> Add order
+        </button>
+      </div>
+
+      {showCreate && <AdminOrderCreateModal onClose={() => setShowCreate(false)} />}
 
       {data.items.length === 0 ? (
         <div className="card p-12 text-center text-ink/50">No orders yet.</div>
@@ -52,7 +62,19 @@ export function AdminOrders() {
               {data.items.map((o) => (
                 <tr key={o.id}>
                   <td className="p-4">
-                    <p className="font-medium">{o.orderNumber}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-medium">{o.orderNumber}</p>
+                      {o.source === 'WHATSAPP' && (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                          <MessageCircle className="h-3 w-3" /> WA
+                        </span>
+                      )}
+                      {o.source === 'MANUAL' && (
+                        <span className="rounded-full bg-maroon-50 px-1.5 py-0.5 text-[10px] font-semibold text-maroon-600">
+                          Manual
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-ink/50">{new Date(o.createdAt).toLocaleDateString()}</p>
                   </td>
                   <td className="p-4">
@@ -82,7 +104,8 @@ export function AdminOrders() {
                   <td className="p-4 text-ink/70">
                     {o.items.map((it) => (
                       <div key={it.id} className="whitespace-nowrap text-xs">
-                        {it.productName} × {it.quantity}
+                        {it.productName}
+                        {it.color && <span className="text-gold-600"> · {it.color}</span>} × {it.quantity}
                       </div>
                     ))}
                   </td>

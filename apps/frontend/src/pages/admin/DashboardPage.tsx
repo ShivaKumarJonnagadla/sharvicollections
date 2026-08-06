@@ -29,6 +29,7 @@ interface DashboardData {
     customerName: string;
     totalMinor: number;
     status: string;
+    source: string;
     paymentMethod: string;
     createdAt: string;
   }[];
@@ -178,7 +179,16 @@ export function DashboardPage() {
               <tbody className="divide-y divide-maroon-50">
                 {data.recentOrders.map((o) => (
                   <tr key={o.id}>
-                    <td className="py-3 font-medium">{o.orderNumber}</td>
+                    <td className="py-3 font-medium">
+                      <span className="inline-flex items-center gap-1.5">
+                        {o.orderNumber}
+                        {o.source === 'WHATSAPP' && (
+                          <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                            WA
+                          </span>
+                        )}
+                      </span>
+                    </td>
                     <td className="py-3">{o.customerName}</td>
                     <td className="py-3">{o.paymentMethod}</td>
                     <td className="py-3">

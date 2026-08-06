@@ -45,6 +45,8 @@
     "outOfStock": "Out of stock",
     "inStock": "In stock",
     "onlyLeft": "Only {{count}} left",
+    "hurry": "Please hurry! Only {{count}} left in stock",
+    "colour": "Colour",
     "description": "Description",
     "related": "You may also like",
     "share": "Share",

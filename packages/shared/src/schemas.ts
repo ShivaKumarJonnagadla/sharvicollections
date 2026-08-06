@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { PAYMENT_METHODS, PRODUCT_BADGES, PRODUCT_SORTS } from './constants.js';
+import { ORDER_STATUSES, PAYMENT_METHODS, PRODUCT_BADGES, PRODUCT_SORTS } from './constants.js';
+
+export const colorOptionSchema = z.object({
+  en: z.string().min(1).max(40),
+  sv: z.string().max(40).default(''),
+});
 
 /**
  * Zod schemas shared by frontend (React Hook Form) and backend (validation
@@ -42,6 +47,7 @@ export const productCreateSchema = z.object({
   badge: z.enum(PRODUCT_BADGES).default('NONE'),
   categoryId: z.string().min(1),
   subcategoryId: z.string().min(1).nullable().optional(),
+  colors: z.array(colorOptionSchema).max(20).default([]),
   images: z.array(productImageInputSchema).max(10).default([]),
 });
 export type ProductCreateInput = z.infer<typeof productCreateSchema>;
@@ -65,6 +71,7 @@ export type ProductQuery = z.infer<typeof productQuerySchema>;
 export const checkoutItemSchema = z.object({
   productId: z.string().min(1),
   quantity: z.number().int().min(1).max(99),
+  color: z.string().max(40).nullable().optional(), // selected colour (English canonical)
 });
 
 const checkoutObject = z.object({
@@ -113,6 +120,28 @@ export type CheckoutInput = z.infer<typeof checkoutSchema>;
 /** Checkout form (frontend) — items come from the cart, so they're omitted here. */
 export const checkoutFormSchema = checkoutObject.omit({ items: true }).superRefine(shippingRefine);
 export type CheckoutFormInput = z.infer<typeof checkoutFormSchema>;
+
+/** Admin manual order (e.g. taken over WhatsApp/phone). */
+export const adminOrderCreateSchema = z.object({
+  customerName: z.string().min(2).max(120),
+  customerEmail: z.string().email().optional().or(z.literal('')),
+  customerPhone: z.string().min(3).max(20),
+  note: z.string().max(1000).optional(),
+  paymentMethod: z.enum(PAYMENT_METHODS).default('CASH'),
+  status: z.enum(ORDER_STATUSES).default('CONFIRMED'),
+  source: z.enum(['WHATSAPP', 'MANUAL']).default('WHATSAPP'),
+  shippingRequired: z.boolean().default(false),
+  items: z
+    .array(
+      z.object({
+        productId: z.string().min(1),
+        quantity: z.number().int().min(1).max(99),
+        color: z.string().max(40).nullable().optional(),
+      }),
+    )
+    .min(1, 'Add at least one item'),
+});
+export type AdminOrderCreateInput = z.infer<typeof adminOrderCreateSchema>;
 
 export const cancelOrderSchema = z.object({
   email: z.string().email('Enter the email used for the order'),

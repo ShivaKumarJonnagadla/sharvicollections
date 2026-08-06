@@ -9,11 +9,12 @@ import QRCode from 'qrcode';
 import { Banknote, Smartphone, Truck } from 'lucide-react';
 import {
   checkoutFormSchema,
+  colorLabel,
   formatSEK,
   type CheckoutFormInput,
   type OrderDTO,
 } from '@sharvi/shared';
-import { useCart } from '@/stores/cart';
+import { useCart, lineKey } from '@/stores/cart';
 import { api, ApiError } from '@/lib/api';
 import { cloudinaryUrl } from '@/lib/utils';
 import { swishLink, SWISH_NUMBER } from '@/lib/swish';
@@ -69,7 +70,11 @@ export function CheckoutPage() {
     try {
       const order = await api.post<OrderDTO>('/orders', {
         ...form,
-        items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        items: items.map((i) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+          color: i.color?.en ?? undefined,
+        })),
       });
       clear();
       if (order.paymentMethod === 'SWISH') {
@@ -290,7 +295,7 @@ export function CheckoutPage() {
           <h2 className="font-serif text-lg text-maroon-700">{t('checkout.summary')}</h2>
           <ul className="space-y-3">
             {items.map((item) => (
-              <li key={item.productId} className="flex items-center gap-3">
+              <li key={lineKey(item.productId, item.color)} className="flex items-center gap-3">
                 <div className="h-14 w-12 overflow-hidden rounded-lg bg-maroon-50">
                   {item.image && (
                     <img
@@ -302,7 +307,10 @@ export function CheckoutPage() {
                 </div>
                 <div className="flex-1 text-sm">
                   <p className="line-clamp-1">{item.name}</p>
-                  <p className="text-ink/50">× {item.quantity}</p>
+                  <p className="text-ink/50">
+                    × {item.quantity}
+                    {item.color ? ` · ${colorLabel(item.color, locale)}` : ''}
+                  </p>
                 </div>
                 <span className="text-sm font-medium">
                   {formatSEK(item.unitPriceMinor * item.quantity, locale)}

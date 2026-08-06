@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react';
 import type { ProductImageDTO } from '@sharvi/shared';
-import { cloudinaryUrl, cn, colorToHex } from '@/lib/utils';
+import { cloudinaryUrl, cn } from '@/lib/utils';
 
 /** Large product gallery with hover-zoom (desktop) and fullscreen lightbox. */
 export function ProductGallery({ images, name }: { images: ProductImageDTO[]; name: string }) {
@@ -16,14 +16,6 @@ export function ProductGallery({ images, name }: { images: ProductImageDTO[]; na
 
   const current = images[active];
   const go = (dir: 1 | -1) => setActive((p) => (p + dir + images.length) % images.length);
-
-  // Unique colours across images (first image index for each colour).
-  const colorSwatches = images.reduce<{ color: string; index: number }[]>((acc, img, i) => {
-    if (img.color && !acc.some((c) => c.color.toLowerCase() === img.color!.toLowerCase())) {
-      acc.push({ color: img.color, index: i });
-    }
-    return acc;
-  }, []);
 
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -80,35 +72,6 @@ export function ProductGallery({ images, name }: { images: ProductImageDTO[]; na
           </>
         )}
       </div>
-
-      {/* Colour swatches — click to view that colour's image */}
-      {colorSwatches.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-ink/60">
-            Colour: <strong className="text-ink">{current.color ?? '—'}</strong>
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {colorSwatches.map((s) => {
-              const isActive = current.color?.toLowerCase() === s.color.toLowerCase();
-              return (
-                <button
-                  key={s.color}
-                  type="button"
-                  title={s.color}
-                  aria-label={s.color}
-                  aria-pressed={isActive}
-                  onClick={() => setActive(s.index)}
-                  className={cn(
-                    'h-8 w-8 rounded-full border-2 transition',
-                    isActive ? 'border-maroon-500 ring-2 ring-maroon-200' : 'border-white shadow-card',
-                  )}
-                  style={{ backgroundColor: colorToHex(s.color) }}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Thumbnails */}
       {images.length > 1 && (

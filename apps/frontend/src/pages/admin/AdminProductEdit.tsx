@@ -21,6 +21,7 @@ interface FormState {
   name: string;
   nameSv: string;
   articleId: string;
+  colors: { en: string; sv: string }[];
   description: string;
   descriptionSv: string;
   priceKr: string;
@@ -37,6 +38,7 @@ const empty: FormState = {
   name: '',
   nameSv: '',
   articleId: '',
+  colors: [],
   description: '',
   descriptionSv: '',
   priceKr: '',
@@ -78,6 +80,7 @@ export function AdminProductEdit() {
       name: p.name,
       nameSv: p.nameSv ?? '',
       articleId: p.articleId ?? '',
+      colors: p.colors ?? [],
       description: p.description ?? '',
       descriptionSv: p.descriptionSv ?? '',
       priceKr: String(p.priceMinor / 100),
@@ -151,6 +154,9 @@ export function AdminProductEdit() {
       name: form.name,
       nameSv: form.nameSv || null,
       articleId: form.articleId.trim() || null,
+      colors: form.colors
+        .filter((c) => c.en.trim())
+        .map((c) => ({ en: c.en.trim(), sv: c.sv.trim() })),
       description: form.description || undefined,
       descriptionSv: form.descriptionSv || null,
       priceMinor: Math.round(Number(form.priceKr) * 100),
@@ -237,25 +243,15 @@ export function AdminProductEdit() {
                     </button>
                   </div>
                 </div>
-                {/* Optional colour label for this image */}
-                <input
-                  value={img.color ?? ''}
-                  onChange={(e) =>
-                    setImages((prev) =>
-                      prev.map((im, x) => (x === i ? { ...im, color: e.target.value } : im)),
-                    )
-                  }
-                  placeholder="Colour (e.g. Gold)"
-                  className="mt-1 w-full rounded-md border border-maroon-100 px-2 py-1 text-xs outline-none focus:border-maroon-300"
-                />
               </div>
             ))}
           </div>
         )}
-        <p className="mt-2 text-xs text-ink/50">
-          Tag images with a colour (e.g. Gold, Silver) to show colour swatches on the product page.
-          {isEdit && ' Saving replaces the image set with the images shown here.'}
-        </p>
+        {isEdit && (
+          <p className="mt-2 text-xs text-ink/50">
+            Saving replaces the image set with the images shown here.
+          </p>
+        )}
       </section>
 
       {/* Details */}
@@ -288,6 +284,57 @@ export function AdminProductEdit() {
             placeholder="e.g. 10234"
             className={`${inputCls} max-w-xs`}
           />
+        </div>
+
+        {/* Colour options (customer selects one when ordering) */}
+        <div>
+          <label className="mb-1 block text-sm text-ink/70">Colour options</label>
+          <div className="space-y-2">
+            {form.colors.map((c, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  value={c.en}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      colors: form.colors.map((x, j) => (j === i ? { ...x, en: e.target.value } : x)),
+                    })
+                  }
+                  placeholder="English (e.g. Gold)"
+                  className={inputCls}
+                />
+                <input
+                  value={c.sv}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      colors: form.colors.map((x, j) => (j === i ? { ...x, sv: e.target.value } : x)),
+                    })
+                  }
+                  placeholder="Svenska (t.ex. Guld)"
+                  className={inputCls}
+                />
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, colors: form.colors.filter((_, j) => j !== i) })}
+                  aria-label="Remove colour"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-red-500 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, colors: [...form.colors, { en: '', sv: '' }] })}
+            className="btn-ghost mt-2 py-1.5 text-xs"
+          >
+            + Add colour
+          </button>
+          <p className="mt-1 text-xs text-ink/50">
+            Customers choose one of these on the product page; it shows on the order &amp; email.
+          </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>

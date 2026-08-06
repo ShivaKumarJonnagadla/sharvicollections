@@ -18,7 +18,7 @@ function renderOrderEmail(order: OrderDTO): string {
           ${it.productImage ? `<img src="${thumb(it.productImage)}" width="56" height="70" style="border-radius:8px;object-fit:cover" alt="">` : ''}
         </td>
         <td style="padding:10px 8px;vertical-align:top;font-size:14px;color:#241a1d">
-          ${it.productName}<br><span style="color:#8a7a80">× ${it.quantity}</span>
+          ${it.productName}${it.color ? ` <span style="color:#a9842c">· ${it.color}</span>` : ''}<br><span style="color:#8a7a80">× ${it.quantity}</span>
         </td>
         <td style="padding:10px 0;vertical-align:top;text-align:right;font-size:14px;color:#241a1d">
           ${formatSEK(it.lineTotalMinor, 'sv')}

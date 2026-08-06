@@ -45,6 +45,8 @@
     "outOfStock": "Slut i lager",
     "inStock": "I lager",
     "onlyLeft": "Endast {{count}} kvar",
+    "hurry": "Skynda dig! Endast {{count}} kvar i lager",
+    "colour": "Färg",
     "description": "Beskrivning",
     "related": "Du kanske också gillar",
     "share": "Dela",
