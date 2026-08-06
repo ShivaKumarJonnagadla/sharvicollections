@@ -108,51 +108,74 @@ async function sendViaResend(opts: SendOpts): Promise<void> {
 }
 
 /**
- * Send the order confirmation. Never throws (fire-and-forget).
- * - Gmail (preferred): emails the customer, CC the store owner. Works for any
- *   recipient — no domain needed.
- * - Resend (fallback): only reaches the account owner on the shared sender, so
- *   we send the notification to the owner until a domain is verified.
+ * Deliver an order email to the customer (CC store owner). Never throws.
+ * - Gmail (preferred): reaches any recipient — no domain needed.
+ * - Resend (fallback): shared sender only reaches the account owner, so we send
+ *   to the owner until a verified domain is configured.
  */
-export async function sendOrderConfirmation(order: OrderDTO): Promise<void> {
-  const html = renderOrderEmail(order);
+async function deliver(order: OrderDTO, subject: string, html: string): Promise<void> {
   const owner = env.ORDER_NOTIFY_EMAIL;
-  const customerSubject = `Your Sharvi Collections order ${order.orderNumber}`;
-
   try {
     if (env.gmailConfigured) {
       await sendViaGmail({
         to: [order.customerEmail],
         cc: owner ? [owner] : undefined,
-        subject: customerSubject,
+        subject,
         html,
       });
       return;
     }
-
     if (env.RESEND_API_KEY) {
       const usingSharedSender = env.EMAIL_FROM.includes('onboarding@resend.dev');
       if (usingSharedSender) {
-        if (owner) {
-          await sendViaResend({
-            to: [owner],
-            subject: `🛍️ New order ${order.orderNumber} — ${order.customerName} (${order.customerEmail})`,
-            html,
-          });
-        }
+        if (owner) await sendViaResend({ to: [owner], subject: `[Order] ${subject}`, html });
       } else {
         await sendViaResend({
           to: [order.customerEmail],
           cc: owner ? [owner] : undefined,
-          subject: customerSubject,
+          subject,
           html,
         });
       }
       return;
     }
-
     console.warn('[email] no email transport configured — skipping order email');
   } catch (err) {
-    console.error('[email] failed to send order confirmation', err);
+    console.error('[email] failed to send email', err);
   }
+}
+
+export async function sendOrderConfirmation(order: OrderDTO): Promise<void> {
+  await deliver(order, `Your Sharvi Collections order ${order.orderNumber}`, renderOrderEmail(order));
+}
+
+/** Cancellation email content. */
+function renderCancellationEmail(order: OrderDTO): string {
+  return `<!doctype html><html><body style="margin:0;background:#fbf7f4;font-family:Helvetica,Arial,sans-serif">
+    <div style="max-width:560px;margin:0 auto;padding:24px">
+      <div style="text-align:center;padding:8px 0 20px">
+        <div style="font-size:22px;color:#7c1f3f;font-weight:700">Sharvi Collections</div>
+      </div>
+      <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(36,26,29,.08)">
+        <h1 style="margin:0 0 4px;font-size:20px;color:#7c1f3f">Order ${order.orderNumber} cancelled</h1>
+        <p style="margin:0 0 12px;color:#8a7a80;font-size:14px">
+          Hi ${order.customerName}, your order has been cancelled as requested.
+        </p>
+        ${order.cancelReason ? `<p style="font-size:14px;color:#241a1d"><strong>Reason:</strong> ${order.cancelReason}</p>` : ''}
+        <p style="font-size:14px;color:#241a1d"><strong>Order total was:</strong> ${formatSEK(order.totalMinor, 'sv')}</p>
+        <p style="margin-top:16px;font-size:13px;color:#8a7a80">
+          Questions about cancellation or refunds? Message us on WhatsApp and we'll help.
+        </p>
+      </div>
+      <p style="text-align:center;color:#b3a3a8;font-size:12px;margin-top:16px">Älmhult, Sweden · Sharvi Collections</p>
+    </div>
+  </body></html>`;
+}
+
+export async function sendOrderCancellation(order: OrderDTO): Promise<void> {
+  await deliver(
+    order,
+    `Your Sharvi Collections order ${order.orderNumber} was cancelled`,
+    renderCancellationEmail(order),
+  );
 }

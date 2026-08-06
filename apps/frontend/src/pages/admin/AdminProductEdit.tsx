@@ -14,11 +14,13 @@ interface ImageState {
   width?: number;
   height?: number;
   alt?: string;
+  color?: string;
 }
 
 interface FormState {
   name: string;
   nameSv: string;
+  articleId: string;
   description: string;
   descriptionSv: string;
   priceKr: string;
@@ -34,6 +36,7 @@ interface FormState {
 const empty: FormState = {
   name: '',
   nameSv: '',
+  articleId: '',
   description: '',
   descriptionSv: '',
   priceKr: '',
@@ -74,6 +77,7 @@ export function AdminProductEdit() {
     setForm({
       name: p.name,
       nameSv: p.nameSv ?? '',
+      articleId: p.articleId ?? '',
       description: p.description ?? '',
       descriptionSv: p.descriptionSv ?? '',
       priceKr: String(p.priceMinor / 100),
@@ -85,7 +89,14 @@ export function AdminProductEdit() {
       isPublished: p.isPublished,
       isFeatured: p.isFeatured,
     });
-    setImages(p.images.map((im) => ({ url: im.url, publicId: '', alt: im.alt ?? undefined })));
+    setImages(
+      p.images.map((im) => ({
+        url: im.url,
+        publicId: im.publicId,
+        alt: im.alt ?? undefined,
+        color: im.color ?? undefined,
+      })),
+    );
   }, [isEdit, existing, id]);
 
   const activeCategory = categories?.find((c) => c.id === form.categoryId);
@@ -130,6 +141,7 @@ export function AdminProductEdit() {
         url: im.url,
         publicId: im.publicId,
         alt: im.alt ?? form.name,
+        color: im.color?.trim() || null,
         width: im.width,
         height: im.height,
         sortOrder: i,
@@ -138,6 +150,7 @@ export function AdminProductEdit() {
     const body = {
       name: form.name,
       nameSv: form.nameSv || null,
+      articleId: form.articleId.trim() || null,
       description: form.description || undefined,
       descriptionSv: form.descriptionSv || null,
       priceMinor: Math.round(Number(form.priceKr) * 100),
@@ -205,32 +218,44 @@ export function AdminProductEdit() {
         </div>
 
         {images.length > 0 && (
-          <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {images.map((img, i) => (
-              <div key={i} className="group relative overflow-hidden rounded-xl border border-maroon-100">
-                <img src={cloudinaryUrl(img.url, { width: 200, crop: 'fill' })} alt="" className="aspect-square w-full object-cover" />
-                {i === 0 && (
-                  <span className="absolute left-1 top-1 rounded bg-maroon-600 px-1.5 py-0.5 text-[10px] text-white">
-                    Cover
-                  </span>
-                )}
-                <div className="absolute inset-x-0 bottom-0 flex justify-between bg-ink/50 p-1 opacity-0 transition group-hover:opacity-100">
-                  <button onClick={() => move(i, -1)} className="text-white" aria-label="Move left">
-                    <GripVertical className="h-4 w-4" />
-                  </button>
-                  <button onClick={() => setImages((p) => p.filter((_, x) => x !== i))} className="text-white" aria-label="Remove">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+              <div key={i} className="rounded-xl border border-maroon-100 p-1">
+                <div className="group relative overflow-hidden rounded-lg">
+                  <img src={cloudinaryUrl(img.url, { width: 200, crop: 'fill' })} alt="" className="aspect-square w-full object-cover" />
+                  {i === 0 && (
+                    <span className="absolute left-1 top-1 rounded bg-maroon-600 px-1.5 py-0.5 text-[10px] text-white">
+                      Cover
+                    </span>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 flex justify-between bg-ink/50 p-1 opacity-0 transition group-hover:opacity-100">
+                    <button onClick={() => move(i, -1)} className="text-white" aria-label="Move left">
+                      <GripVertical className="h-4 w-4" />
+                    </button>
+                    <button onClick={() => setImages((p) => p.filter((_, x) => x !== i))} className="text-white" aria-label="Remove">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
+                {/* Optional colour label for this image */}
+                <input
+                  value={img.color ?? ''}
+                  onChange={(e) =>
+                    setImages((prev) =>
+                      prev.map((im, x) => (x === i ? { ...im, color: e.target.value } : im)),
+                    )
+                  }
+                  placeholder="Colour (e.g. Gold)"
+                  className="mt-1 w-full rounded-md border border-maroon-100 px-2 py-1 text-xs outline-none focus:border-maroon-300"
+                />
               </div>
             ))}
           </div>
         )}
-        {isEdit && (
-          <p className="mt-2 text-xs text-ink/50">
-            Note: uploading new images replaces the existing set on save.
-          </p>
-        )}
+        <p className="mt-2 text-xs text-ink/50">
+          Tag images with a colour (e.g. Gold, Silver) to show colour swatches on the product page.
+          {isEdit && ' Saving replaces the image set with the images shown here.'}
+        </p>
       </section>
 
       {/* Details */}
@@ -253,6 +278,16 @@ export function AdminProductEdit() {
               className={inputCls}
             />
           </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-ink/70">Article ID (4–6 digits)</label>
+          <input
+            value={form.articleId}
+            onChange={(e) => setForm({ ...form, articleId: e.target.value })}
+            inputMode="numeric"
+            placeholder="e.g. 10234"
+            className={`${inputCls} max-w-xs`}
+          />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>

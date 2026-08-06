@@ -120,7 +120,21 @@
     "status": "Status",
     "total": "Totalt",
     "backHome": "Tillbaka till startsidan",
-    "notFound": "Beställningen hittades inte"
+    "notFound": "Beställningen hittades inte",
+    "cancel": "Avbryt beställning",
+    "cancelTitle": "Avbryta denna beställning?",
+    "cancelTermsTitle": "Avbokningsvillkor",
+    "cancelTerms": "Du kan avboka kostnadsfritt medan din beställning är Väntande eller Bekräftad. När vi börjat behandla eller skicka den kan den inte längre avbrytas online. Eventuell Swish-betalning återbetalas inom några arbetsdagar.",
+    "cancelEmailLabel": "Bekräfta e-postadressen för beställningen",
+    "cancelReasonLabel": "Anledning till avbokning",
+    "cancelReasonPlaceholder": "t.ex. Beställde av misstag, ångrade mig…",
+    "cancelConfirm": "Ja, avbryt beställningen",
+    "keepOrder": "Behåll beställning",
+    "cancelling": "Avbryter…",
+    "cancelledNote": "Denna beställning har avbrutits.",
+    "cancelReasonShown": "Anledning",
+    "cancelNotAllowed": "Denna beställning förbereds redan och kan inte längre avbrytas online. Skicka ett meddelande till oss på WhatsApp så hjälper vi dig med avbokningsvillkoren.",
+    "contactWhatsApp": "Meddela oss på WhatsApp"
   },
   "whatsapp": {
     "title": "Gå med i vår WhatsApp-grupp",

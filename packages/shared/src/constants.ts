@@ -20,6 +20,12 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export const PAYMENT_METHODS = ['CASH', 'SWISH'] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
+/** Statuses at which a customer may still self-cancel their order. */
+export const CANCELLABLE_STATUSES = ['PENDING', 'CONFIRMED'] as const;
+export function isCancellable(status: string): boolean {
+  return (CANCELLABLE_STATUSES as readonly string[]).includes(status);
+}
+
 export const PAYMENT_STATUSES = ['UNPAID', 'PENDING', 'PAID', 'FAILED', 'REFUNDED'] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 

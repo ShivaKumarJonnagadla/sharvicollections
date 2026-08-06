@@ -1,11 +1,12 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
-import { CheckCircle2, Circle, Clock } from 'lucide-react';
-import { formatSEK, type OrderDTO } from '@sharvi/shared';
-import { api } from '@/lib/api';
-import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
+import { CheckCircle2, Circle, Clock, XCircle } from 'lucide-react';
+import { formatSEK, isCancellable, type OrderDTO } from '@sharvi/shared';
+import { api, ApiError } from '@/lib/api';
+import { cn, WHATSAPP_NUMBER } from '@/lib/utils';
 import { PageLoader } from '@/components/PageLoader';
 import { Seo } from '@/components/Seo';
 
@@ -139,10 +140,139 @@ export function OrderConfirmationPage() {
           )}
         </ul>
 
+        <CancelSection order={data} />
+
         <Link to="/shop" className="btn-primary mt-8">
           {t('cart.continueShopping')}
         </Link>
       </motion.div>
     </div>
+  );
+}
+
+const WA_LINK = `https://wa.me/${WHATSAPP_NUMBER.replace(/[^0-9]/g, '')}`;
+
+/** Cancellation UI: cancel button + terms/reason modal, or cancelled/blocked states. */
+function CancelSection({ order }: { order: OrderDTO }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const cancel = useMutation({
+    mutationFn: () => api.post(`/orders/${order.orderNumber}/cancel`, { email, reason }),
+    onSuccess: () => {
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ['order', order.orderNumber] });
+    },
+    onError: (e) => setError(e instanceof ApiError ? e.message : t('common.error')),
+  });
+
+  if (order.status === 'CANCELLED') {
+    return (
+      <div className="mt-8 rounded-xl bg-maroon-50 p-4 text-left text-sm">
+        <p className="font-medium text-maroon-700">{t('order.cancelledNote')}</p>
+        {order.cancelReason && (
+          <p className="mt-1 text-ink/60">
+            {t('order.cancelReasonShown')}: {order.cancelReason}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (!isCancellable(order.status)) {
+    return (
+      <p className="mt-8 text-xs text-ink/50">
+        {t('order.cancelNotAllowed')}{' '}
+        <a href={WA_LINK} target="_blank" rel="noreferrer" className="text-maroon-600 underline">
+          {t('order.contactWhatsApp')}
+        </a>
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => {
+          setError(null);
+          setOpen(true);
+        }}
+        className="mx-auto mt-8 flex items-center gap-1.5 text-sm text-maroon-500 hover:text-maroon-700 hover:underline"
+      >
+        <XCircle className="h-4 w-4" /> {t('order.cancel')}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-ink/50 p-4"
+            onClick={() => setOpen(false)}
+          >
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 30, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="card w-full max-w-md p-6 text-left"
+            >
+              <h2 className="font-serif text-xl text-maroon-700">{t('order.cancelTitle')}</h2>
+
+              <div className="mt-4 rounded-xl bg-maroon-50 p-3 text-xs text-ink/70">
+                <p className="mb-1 font-semibold text-maroon-700">{t('order.cancelTermsTitle')}</p>
+                {t('order.cancelTerms')}
+              </div>
+
+              <div className="mt-4 space-y-3">
+                <div>
+                  <label className="mb-1 block text-sm text-ink/70">
+                    {t('order.cancelEmailLabel')}
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-xl border border-maroon-200 px-3 py-2 text-sm outline-none focus:border-maroon-400"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-ink/70">
+                    {t('order.cancelReasonLabel')}
+                  </label>
+                  <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    rows={3}
+                    placeholder={t('order.cancelReasonPlaceholder')}
+                    className="w-full rounded-xl border border-maroon-200 px-3 py-2 text-sm outline-none focus:border-maroon-400"
+                  />
+                </div>
+              </div>
+
+              {error && <p className="mt-3 rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>}
+
+              <div className="mt-5 flex gap-3">
+                <button onClick={() => setOpen(false)} className="btn-ghost flex-1">
+                  {t('order.keepOrder')}
+                </button>
+                <button
+                  onClick={() => cancel.mutate()}
+                  disabled={cancel.isPending || !email || reason.trim().length < 3}
+                  className="btn flex-1 bg-red-600 text-white hover:bg-red-700"
+                >
+                  {cancel.isPending ? t('order.cancelling') : t('order.cancelConfirm')}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

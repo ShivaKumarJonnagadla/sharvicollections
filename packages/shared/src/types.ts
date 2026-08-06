@@ -32,7 +32,9 @@ export interface Paginated<T> {
 export interface ProductImageDTO {
   id: string;
   url: string;
+  publicId: string;
   alt: string | null;
+  color: string | null;
   width: number | null;
   height: number | null;
   sortOrder: number;
@@ -42,6 +44,7 @@ export interface ProductDTO {
   id: string;
   name: string;
   nameSv: string | null;
+  articleId: string | null;
   slug: string;
   description: string | null;
   descriptionSv: string | null;
@@ -98,6 +101,8 @@ export interface OrderDTO {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   paymentRef: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
   shippingRequired: boolean;
   shippingAddress: string | null;
   shippingCity: string | null;

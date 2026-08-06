@@ -120,7 +120,21 @@
     "status": "Status",
     "total": "Total",
     "backHome": "Back to home",
-    "notFound": "Order not found"
+    "notFound": "Order not found",
+    "cancel": "Cancel order",
+    "cancelTitle": "Cancel this order?",
+    "cancelTermsTitle": "Cancellation terms",
+    "cancelTerms": "You can cancel free of charge while your order is Pending or Confirmed. Once we start processing or ship it, it can no longer be cancelled online. Any Swish payment already made will be refunded within a few business days.",
+    "cancelEmailLabel": "Confirm the email used for this order",
+    "cancelReasonLabel": "Reason for cancellation",
+    "cancelReasonPlaceholder": "e.g. Ordered by mistake, changed my mind…",
+    "cancelConfirm": "Yes, cancel order",
+    "keepOrder": "Keep order",
+    "cancelling": "Cancelling…",
+    "cancelledNote": "This order has been cancelled.",
+    "cancelReasonShown": "Reason",
+    "cancelNotAllowed": "This order is already being prepared and can no longer be cancelled online. Please message us on WhatsApp and we'll help with the cancellation terms.",
+    "contactWhatsApp": "Message us on WhatsApp"
   },
   "whatsapp": {
     "title": "Join our WhatsApp Group",

@@ -73,6 +73,11 @@ export function AdminOrders() {
                           .join(', ')}
                       </p>
                     )}
+                    {o.status === 'CANCELLED' && o.cancelReason && (
+                      <p className="mt-1 max-w-[220px] text-xs text-red-600">
+                        ✕ Cancelled: {o.cancelReason}
+                      </p>
+                    )}
                   </td>
                   <td className="p-4 text-ink/70">
                     {o.items.map((it) => (

@@ -1,11 +1,17 @@
 import { Router } from 'express';
 import type { Prisma } from '@prisma/client';
-import { checkoutSchema, type CheckoutInput } from '@sharvi/shared';
+import {
+  cancelOrderSchema,
+  checkoutSchema,
+  isCancellable,
+  type CancelOrderInput,
+  type CheckoutInput,
+} from '@sharvi/shared';
 import { prisma } from '../lib/prisma.js';
 import { AppError, asyncHandler, created, ok } from '../lib/http.js';
 import { serializeOrder } from '../lib/serialize.js';
 import { audit } from '../lib/audit.js';
-import { sendOrderConfirmation } from '../lib/email.js';
+import { sendOrderCancellation, sendOrderConfirmation } from '../lib/email.js';
 import { getStoreSettings } from '../lib/settings.js';
 import { validate, validated } from '../middleware/validate.js';
 import { orderLimiter } from '../middleware/rateLimit.js';
@@ -161,6 +167,71 @@ router.get(
     });
     if (!order) throw AppError.notFound('Order not found');
     return ok(res, serializeOrder(order));
+  }),
+);
+
+/**
+ * @openapi
+ * /orders/{orderNumber}/cancel:
+ *   post:
+ *     tags: [Orders]
+ *     summary: Customer self-cancels an order (only while PENDING/CONFIRMED)
+ */
+router.post(
+  '/:orderNumber/cancel',
+  validate(cancelOrderSchema),
+  asyncHandler(async (req, res) => {
+    const { email, reason } = validated<CancelOrderInput>(req);
+    const existing = await prisma.order.findUnique({
+      where: { orderNumber: req.params.orderNumber },
+      include: { items: true },
+    });
+    if (!existing) throw AppError.notFound('Order not found');
+
+    // Verify the requester owns the order (email must match).
+    if (existing.customerEmail.toLowerCase() !== email.trim().toLowerCase()) {
+      throw AppError.forbidden('That email does not match this order');
+    }
+
+    if (existing.status === 'CANCELLED') {
+      return ok(res, serializeOrder(existing)); // idempotent
+    }
+    if (!isCancellable(existing.status)) {
+      throw new AppError(
+        409,
+        'NOT_CANCELLABLE',
+        'This order is already being processed and can no longer be cancelled online. Please message us on WhatsApp for help.',
+      );
+    }
+
+    const order = await prisma.$transaction(async (tx) => {
+      const updated = await tx.order.update({
+        where: { id: existing.id },
+        data: { status: 'CANCELLED', cancelReason: reason, cancelledAt: new Date() },
+        include: { items: true },
+      });
+      // Return stock to inventory (order was never fulfilled).
+      for (const item of existing.items) {
+        if (item.productId) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          });
+        }
+      }
+      return updated;
+    });
+
+    await audit(req, {
+      action: 'order.cancel',
+      entity: 'Order',
+      entityId: order.id,
+      metadata: { orderNumber: order.orderNumber, reason },
+    });
+
+    const dto = serializeOrder(order);
+    void sendOrderCancellation(dto);
+    return ok(res, dto);
   }),
 );
 

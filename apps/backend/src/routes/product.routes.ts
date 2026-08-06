@@ -231,6 +231,7 @@ router.post(
       data: {
         name: input.name,
         nameSv: input.nameSv ?? null,
+        articleId: input.articleId ?? null,
         slug,
         description: input.description,
         descriptionSv: input.descriptionSv ?? null,
@@ -248,6 +249,7 @@ router.post(
             url: img.url,
             publicId: img.publicId,
             alt: img.alt ?? input.name,
+            color: img.color ?? null,
             width: img.width,
             height: img.height,
             sortOrder: img.sortOrder ?? i,
@@ -279,6 +281,7 @@ router.patch(
     const data: Prisma.ProductUpdateInput = {
       name: input.name,
       nameSv: input.nameSv,
+      articleId: input.articleId,
       description: input.description,
       descriptionSv: input.descriptionSv,
       priceMinor: input.priceMinor,
@@ -305,6 +308,7 @@ router.patch(
           url: img.url,
           publicId: img.publicId,
           alt: img.alt ?? existing.name,
+          color: img.color ?? null,
           width: img.width,
           height: img.height,
           sortOrder: img.sortOrder ?? i,

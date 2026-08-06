@@ -17,6 +17,7 @@ export const productImageInputSchema = z.object({
   url: z.string().url(),
   publicId: z.string().min(1),
   alt: z.string().max(200).optional(),
+  color: z.string().max(60).nullable().optional(),
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
   sortOrder: z.number().int().min(0).default(0),
@@ -25,6 +26,11 @@ export const productImageInputSchema = z.object({
 export const productCreateSchema = z.object({
   name: z.string().min(2).max(160),
   nameSv: z.string().max(160).nullable().optional(),
+  articleId: z
+    .string()
+    .regex(/^\d{4,6}$/, 'Article ID must be 4–6 digits')
+    .nullable()
+    .optional(),
   description: z.string().max(5000).optional(),
   descriptionSv: z.string().max(5000).nullable().optional(),
   priceMinor: z.number().int().min(0),
@@ -107,6 +113,12 @@ export type CheckoutInput = z.infer<typeof checkoutSchema>;
 /** Checkout form (frontend) — items come from the cart, so they're omitted here. */
 export const checkoutFormSchema = checkoutObject.omit({ items: true }).superRefine(shippingRefine);
 export type CheckoutFormInput = z.infer<typeof checkoutFormSchema>;
+
+export const cancelOrderSchema = z.object({
+  email: z.string().email('Enter the email used for the order'),
+  reason: z.string().min(3, 'Please tell us why').max(500),
+});
+export type CancelOrderInput = z.infer<typeof cancelOrderSchema>;
 
 export const consentSchema = z.object({
   visitorId: z.string().min(8).max(64),

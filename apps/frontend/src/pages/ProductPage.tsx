@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, Share2, ShoppingBag } from 'lucide-react';
-import { formatSEK, LOW_STOCK_THRESHOLD, productDescription, productName } from '@sharvi/shared';
+import {
+  discountPercent,
+  formatSEK,
+  LOW_STOCK_THRESHOLD,
+  productDescription,
+  productName,
+} from '@sharvi/shared';
 import { useProduct } from '@/hooks/catalog';
 import { ProductGallery } from '@/components/ProductGallery';
 import { ProductCard } from '@/components/ProductCard';
@@ -105,19 +111,31 @@ export function ProductPage() {
           <ProductGallery images={product.images} name={product.name} />
 
           <div>
-            <p className="text-sm uppercase tracking-widest text-gold-500">
-              {product.category.name}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm uppercase tracking-widest text-gold-500">
+                {product.category.name}
+              </p>
+              {product.articleId && (
+                <p className="text-sm text-ink/40">Art. {product.articleId}</p>
+              )}
+            </div>
             <h1 className="mt-2 font-serif text-3xl text-maroon-800 sm:text-4xl">{displayName}</h1>
 
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               <span className="text-2xl font-semibold text-maroon-700">
                 {formatSEK(product.priceMinor, locale)}
               </span>
               {product.compareAtMinor && product.compareAtMinor > product.priceMinor && (
-                <span className="text-lg text-maroon-300 line-through">
-                  {formatSEK(product.compareAtMinor, locale)}
-                </span>
+                <>
+                  <span className="text-lg text-maroon-300 line-through">
+                    {formatSEK(product.compareAtMinor, locale)}
+                  </span>
+                  {discountPercent(product.priceMinor, product.compareAtMinor) !== null && (
+                    <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white">
+                      −{discountPercent(product.priceMinor, product.compareAtMinor)}%
+                    </span>
+                  )}
+                </>
               )}
             </div>
 

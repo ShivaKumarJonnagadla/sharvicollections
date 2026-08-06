@@ -30,3 +30,12 @@ export function formatSEK(minor: number, locale: Locale = 'sv'): string {
 export function isSupportedLocale(value: string): value is Locale {
   return (SUPPORTED_LOCALES as readonly string[]).includes(value);
 }
+
+/** Discount percentage when a compare-at price is higher than the price. */
+export function discountPercent(
+  priceMinor: number,
+  compareAtMinor: number | null | undefined,
+): number | null {
+  if (!compareAtMinor || compareAtMinor <= priceMinor) return null;
+  return Math.round((1 - priceMinor / compareAtMinor) * 100);
+}

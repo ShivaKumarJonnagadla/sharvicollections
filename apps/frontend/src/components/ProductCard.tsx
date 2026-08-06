@@ -3,7 +3,13 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Heart, ShoppingBag } from 'lucide-react';
-import { formatSEK, LOW_STOCK_THRESHOLD, productName, type ProductDTO } from '@sharvi/shared';
+import {
+  discountPercent,
+  formatSEK,
+  LOW_STOCK_THRESHOLD,
+  productName,
+  type ProductDTO,
+} from '@sharvi/shared';
 import { cloudinaryUrl, cn } from '@/lib/utils';
 import { useCart } from '@/stores/cart';
 import { useUi } from '@/stores/ui';
@@ -26,6 +32,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
   const displayName = productName(product, locale);
   const soldOut = product.stock <= 0;
   const lowStock = !soldOut && product.stock <= LOW_STOCK_THRESHOLD;
+  const discount = discountPercent(product.priceMinor, product.compareAtMinor);
 
   const go = (dir: 1 | -1) => (e: React.MouseEvent) => {
     e.preventDefault();
@@ -64,9 +71,14 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
             <div className="flex h-full items-center justify-center text-maroon-300">No image</div>
           )}
 
-          {/* Badges (stacked): product badge + stock indicator */}
+          {/* Badges (stacked): discount + product badge + stock indicator */}
           <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
-            {product.badge !== 'NONE' && (
+            {discount !== null && (
+              <span className="rounded-full bg-emerald-600 px-3 py-1 text-[11px] font-semibold text-white shadow-sm">
+                −{discount}%
+              </span>
+            )}
+            {product.badge !== 'NONE' && !(product.badge === 'SALE' && discount !== null) && (
               <span
                 className={cn(
                   'rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide shadow-sm',
@@ -156,7 +168,12 @@ export function ProductCard({ product, index = 0 }: { product: ProductDTO; index
         </div>
 
         <div className="mt-3 space-y-1">
-          <p className="text-xs uppercase tracking-wide text-maroon-400">{product.category.name}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs uppercase tracking-wide text-maroon-400">{product.category.name}</p>
+            {product.articleId && (
+              <p className="text-xs text-ink/40">Art. {product.articleId}</p>
+            )}
+          </div>
           <h3 className="line-clamp-1 font-serif text-lg text-ink">{displayName}</h3>
           <div className="flex items-center gap-2">
             <span className="font-medium text-maroon-700">

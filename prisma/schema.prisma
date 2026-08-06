@@ -143,6 +143,7 @@ model Product {
   priceMinor    Int
   compareAtMinor Int?        // original price for SALE badge
   currency      String       @default("SEK")
+  articleId     String?      @unique // human article/reference id (4–6 digits)
   sku           String?      @unique
   stock         Int          @default(0)
   isPublished   Boolean      @default(true) // hidden products never appear on storefront
@@ -174,6 +175,7 @@ model ProductImage {
   // Cloudinary public id — needed to delete/transform the asset.
   publicId     String
   alt          String?
+  color        String?  // optional colour this image represents (e.g. "Rose Gold")
   width        Int?
   height       Int?
   sortOrder    Int      @default(0)
@@ -212,6 +214,8 @@ model Order {
   subtotalMinor   Int
   totalMinor      Int
   currency        String        @default("SEK")
+  cancelledAt     DateTime?
+  cancelReason    String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
