@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Copy, Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
 import { formatSEK, LOW_STOCK_THRESHOLD, type Paginated, type ProductDTO } from '@sharvi/shared';
 import { api } from '@/lib/api';
 import { cloudinaryUrl } from '@/lib/utils';
@@ -10,7 +10,7 @@ export function AdminProducts() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'products'],
-    queryFn: () => api.get<Paginated<ProductDTO>>('/products/admin/all?pageSize=60'),
+    queryFn: () => api.get<Paginated<ProductDTO>>('/products/admin/all?pageSize=200'),
   });
 
   const toggle = useMutation({
@@ -104,9 +104,17 @@ export function AdminProducts() {
                     </button>
                     <Link
                       to={`/admin/products/${p.id}`}
+                      title="Edit"
                       className="grid h-9 w-9 place-items-center rounded-lg hover:bg-maroon-50"
                     >
                       <Pencil className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      to={`/admin/products/new?duplicate=${p.id}`}
+                      title="Duplicate"
+                      className="grid h-9 w-9 place-items-center rounded-lg hover:bg-maroon-50"
+                    >
+                      <Copy className="h-4 w-4" />
                     </Link>
                     <button
                       onClick={() => {

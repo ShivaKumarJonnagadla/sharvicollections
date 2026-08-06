@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, GripVertical, Loader2, Trash2, Upload } from 'lucide-react';
 import type { CategoryDTO, ProductDTO } from '@sharvi/shared';
@@ -54,6 +54,8 @@ const empty: FormState = {
 export function AdminProductEdit() {
   const { id } = useParams();
   const isEdit = Boolean(id);
+  const [searchParams] = useSearchParams();
+  const duplicateId = searchParams.get('duplicate');
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: categories } = useCategories();
@@ -66,20 +68,25 @@ export function AdminProductEdit() {
   const [error, setError] = useState<string | null>(null);
 
   const { data: existing, isLoading } = useQuery({
-    queryKey: ['admin', 'product', id],
-    enabled: isEdit,
-    queryFn: () => api.get<Paginated>(`/products/admin/all?pageSize=60`),
+    queryKey: ['admin', 'product', 'source'],
+    enabled: isEdit || Boolean(duplicateId),
+    queryFn: () => api.get<Paginated>(`/products/admin/all?pageSize=200`),
   });
 
-  // Populate form when editing (find product in the admin list response).
+  // Populate the form when editing OR duplicating an existing product.
   useEffect(() => {
-    if (!isEdit || !existing) return;
-    const p = existing.items.find((x) => x.id === id);
+    if (!existing) return;
+    const sourceId = isEdit ? id : duplicateId;
+    if (!sourceId) return;
+    const p = existing.items.find((x) => x.id === sourceId);
     if (!p) return;
+    const duplicating = !isEdit && Boolean(duplicateId);
     setForm({
-      name: p.name,
-      nameSv: p.nameSv ?? '',
-      articleId: p.articleId ?? '',
+      // When duplicating, mark the name so it's clearly a new product.
+      name: duplicating ? `${p.name} (Copy)` : p.name,
+      nameSv: p.nameSv ? (duplicating ? `${p.nameSv} (Kopia)` : p.nameSv) : '',
+      // Article ID is unique per product — never copied.
+      articleId: duplicating ? '' : (p.articleId ?? ''),
       colors: (p.colors ?? []).map((c) => ({ en: c.en, sv: c.sv, stock: c.stock ?? 0 })),
       description: p.description ?? '',
       descriptionSv: p.descriptionSv ?? '',
@@ -92,15 +99,18 @@ export function AdminProductEdit() {
       isPublished: p.isPublished,
       isFeatured: p.isFeatured,
     });
+    // Images are not copied when duplicating.
     setImages(
-      p.images.map((im) => ({
-        url: im.url,
-        publicId: im.publicId,
-        alt: im.alt ?? undefined,
-        color: im.color ?? undefined,
-      })),
+      duplicating
+        ? []
+        : p.images.map((im) => ({
+            url: im.url,
+            publicId: im.publicId,
+            alt: im.alt ?? undefined,
+            color: im.color ?? undefined,
+          })),
     );
-  }, [isEdit, existing, id]);
+  }, [isEdit, existing, id, duplicateId]);
 
   const activeCategory = categories?.find((c) => c.id === form.categoryId);
 
@@ -183,7 +193,7 @@ export function AdminProductEdit() {
     }
   };
 
-  if (isEdit && isLoading) return <PageLoader />;
+  if ((isEdit || duplicateId) && isLoading) return <PageLoader />;
 
   const inputCls =
     'w-full rounded-xl border border-maroon-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-maroon-500';
@@ -193,7 +203,9 @@ export function AdminProductEdit() {
       <button onClick={() => navigate('/admin/products')} className="flex items-center gap-2 text-sm text-ink/60">
         <ArrowLeft className="h-4 w-4" /> Products
       </button>
-      <h1 className="font-serif text-3xl text-maroon-700">{isEdit ? 'Edit' : 'New'} Product</h1>
+      <h1 className="font-serif text-3xl text-maroon-700">
+        {isEdit ? 'Edit' : duplicateId ? 'Duplicate' : 'New'} Product
+      </h1>
 
       {/* Images */}
       <section className="card p-6">
